@@ -100,6 +100,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 
     <a class="nav-link" href="objekter.html">Katalog</a>
     <a class="nav-link active" href="setup.html">Oppsett</a>
     <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <button class="nav-install" id="install-btn" style="display:none">⬇ Installer</button>
     <button class="nav-night" id="night-btn">🔴 Natt</button>
   </div>
 </nav>
@@ -471,6 +472,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 
   renderCustomList();
   renderMyCollection();
   initNightMode();
+  initInstall();
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>

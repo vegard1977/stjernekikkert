@@ -1036,3 +1036,31 @@ function initNightMode() {
     on = !on; localStorage.setItem(NM_KEY, on ? '1' : '0'); apply(on);
   });
 }
+
+// ---- Installer-knapp (PWA) ----
+// Knappen (#install-btn) er skjult som standard. Den vises når nettleseren
+// fyrer av beforeinstallprompt, og skjules når appen alt er installert.
+var _deferredInstall = null;
+function initInstall() {
+  var btn = document.getElementById('install-btn');
+  if (!btn) return;
+  // Allerede installert / kjører som app? Skjul knappen.
+  var standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  if (standalone || window.navigator.standalone) { btn.style.display = 'none'; return; }
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    _deferredInstall = e;
+    btn.style.display = '';
+  });
+  btn.addEventListener('click', function() {
+    if (!_deferredInstall) {
+      // Fallback (f.eks. iOS Safari, som ikke støtter prompt)
+      alert('For å installere: åpne nettlesermenyen og velg «Legg til på Hjem-skjerm».');
+      return;
+    }
+    _deferredInstall.prompt();
+    _deferredInstall.userChoice.then(function() { _deferredInstall = null; btn.style.display = 'none'; });
+  });
+  window.addEventListener('appinstalled', function() { btn.style.display = 'none'; _deferredInstall = null; });
+}

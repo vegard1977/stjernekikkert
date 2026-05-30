@@ -292,6 +292,7 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
     <a class="nav-link" href="objekter.html">Katalog</a>
     <a class="nav-link" href="setup.html">Oppsett</a>
     <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <button class="nav-install" id="install-btn" style="display:none">⬇ Installer</button>
     <button class="nav-night" id="night-btn" title="Nattmodus – rødt lys bevarer mørketilpasning">🔴 Natt</button>
   </div>
 </nav>
@@ -1179,6 +1180,7 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
   });
 
   initNightMode();
+  initInstall();
   render();
 })();
 </script>

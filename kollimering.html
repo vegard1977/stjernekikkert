@@ -62,6 +62,7 @@
     <a class="nav-link" href="objekter.html">Katalog</a>
     <a class="nav-link" href="setup.html">Oppsett</a>
     <a class="nav-link active" href="kollimering.html">Kollimering</a>
+    <button class="nav-install" id="install-btn" style="display:none">⬇ Installer</button>
     <button class="nav-night" id="night-btn">🔴 Natt</button>
   </div>
 </nav>
@@ -182,6 +183,7 @@
 
 <script>
   initNightMode();
+  initInstall();
   // Gjør hvert panel sammenleggbart (dropdown), default åpent. Tilstand huskes.
   (function(){
     var panels = document.querySelectorAll('.wrap .panel');
