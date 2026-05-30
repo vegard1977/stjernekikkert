@@ -57,6 +57,9 @@
 .star-opt .sp{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--cyan);margin-top:4px}
 .star-opt.below{opacity:.45}
 .star-opt.below .sp{color:var(--ink-faint)}
+.cal-go{margin-top:10px;width:100%;padding:10px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.92rem;font-weight:600;border:2px solid var(--cyan);color:var(--cyan);background:rgba(111,216,224,.12);transition:all .15s}
+.cal-go:hover{background:rgba(111,216,224,.24)}
+.cal-go:active{transform:scale(.98)}
 
 .muted{color:var(--ink-faint)}
 .hidden{display:none}
@@ -242,48 +245,62 @@
   });
 
   // ---- Kalibreringspanel ----
+  var lastCapture = null;  // {name, azTrue, altTrue, azMeas, altMeas}
   function renderCalib(){
     var body = document.getElementById('calib-body');
     var now = new Date();
     var html = '';
-    if (calPoints.length){
-      html += '<div class="banner info">Fanget <b>'+calPoints.length+'</b> stjerne'+(calPoints.length>1?'r':'')+'. '+
-        (calPoints.length>=2?'God 2-stjerners kalibrering klar.':'Fang gjerne én til, langt unna den første, for bedre presisjon.')+'</div>';
+    // Bekreftelse på sist fangede stjerne
+    if (lastCapture){
+      html += '<div class="banner ok" style="background:rgba(138,217,156,.1);border:1px solid rgba(138,217,156,.4);color:var(--green)">'+
+        '✓ <b>Fanget '+htmlEscape(lastCapture.name)+'</b><br>'+
+        '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.8rem;color:var(--ink-soft)">'+
+        'Stjernen står: az '+Math.round(lastCapture.azTrue)+'° · '+Math.round(lastCapture.altTrue)+'° opp<br>'+
+        'Telefonen målte: az '+Math.round(lastCapture.azMeas)+'° · '+Math.round(lastCapture.altMeas)+'° opp</span></div>';
     }
-    html += '<div class="step-pill">Steg '+(calPoints.length+1)+'</div>';
-    html += '<p class="hint" style="margin-bottom:10px">Pek kikkerten nøyaktig på stjernen, sentrer den i okularet, og trykk «Fang». Velg en stjerne du ser godt:</p>';
+    if (calPoints.length){
+      html += '<div class="banner info">Du har fanget <b>'+calPoints.length+'</b> stjerne'+(calPoints.length>1?'r':'')+'. '+
+        (calPoints.length>=2?'God 2-stjerners kalibrering klar — trykk «Bruk kalibrering».':'Fang gjerne én til, langt unna den første, for bedre presisjon — eller bruk denne nå.')+'</div>';
+    }
+    html += '<div class="step-pill">Steg '+(calPoints.length+1)+': sikt og kalibrer</div>';
+    html += '<p class="hint" style="margin-bottom:10px">Pek kikkerten nøyaktig på en stjerne du ser, sentrer den i okularet, og trykk <b>«🎯 Kalibrer her»</b> på den stjernen:</p>';
     var stars = ALIGN_STARS.map(function(s){
       var aa = altAz(s.ra, s.dec, now, lat, lon); return {s:s, alt:aa.alt, az:aa.az};
     }).filter(function(x){ return x.alt >= 5; }).sort(function(a,b){ return b.alt-a.alt; });
     html += '<div class="star-grid">'+ stars.map(function(x){
-      return '<button class="star-opt" data-cal="'+x.s.id+'">'+
+      return '<div class="star-opt" style="cursor:default">'+
         '<div class="sn">'+htmlEscape(x.s.name)+'</div>'+
         '<div class="sh">'+htmlEscape(x.s.hint)+'</div>'+
         '<div class="sp">az '+Math.round(x.az)+'° · '+Math.round(x.alt)+'° opp · '+compassSimple(x.az)+'</div>'+
-        '</button>';
+        '<button class="cal-go" data-cal="'+x.s.id+'">🎯 Kalibrer her</button>'+
+        '</div>';
     }).join('') +'</div>';
-    if (calPoints.length>=1) html += '<button class="big-btn gold" id="finish-cal">Bruk kalibrering ('+calPoints.length+' stjerne'+(calPoints.length>1?'r':'')+')</button>';
+    if (calPoints.length>=1) html += '<button class="big-btn gold" id="finish-cal">✓ Bruk kalibrering ('+calPoints.length+' stjerne'+(calPoints.length>1?'r':'')+')</button>';
     if (cal || calPoints.length) html += '<button class="big-btn" id="reset-cal" style="border-color:var(--rust);color:var(--rust);background:rgba(232,131,90,.08)">Nullstill kalibrering</button>';
     body.innerHTML = html;
 
     body.querySelectorAll('[data-cal]').forEach(function(btn){
       btn.addEventListener('click', function(){
-        if (rawAz == null){ alert('Ingen sensordata ennå — sjekk sensortilgang øverst.'); return; }
+        if (rawAz == null){ alert('Ingen sensordata ennå — sjekk sensortilgang øverst på siden.'); return; }
         var s = alignStarById(this.getAttribute('data-cal'));
         var aa = altAz(s.ra, s.dec, new Date(), lat, lon);
         calPoints.push({ azMeas:rawAz, altMeas:rawAlt, azTrue:aa.az, altTrue:aa.alt });
-        if (calPoints.length>2) calPoints = calPoints.slice(-2); // behold de to siste
+        if (calPoints.length>2) calPoints = calPoints.slice(-2);
+        lastCapture = { name:s.name, azTrue:aa.az, altTrue:aa.alt, azMeas:rawAz, altMeas:rawAlt };
         renderCalib();
+        document.getElementById('calib-body').scrollIntoView({behavior:'smooth', block:'start'});
       });
     });
     var fin = document.getElementById('finish-cal');
     if (fin) fin.addEventListener('click', function(){
       cal = buildCalibration(calPoints); saveAlign(cal); renderCalStatus();
-      document.getElementById('calib-body').scrollIntoView({behavior:'smooth', block:'nearest'});
+      lastCapture = null;
+      alert('Kalibrering lagret ('+cal.type+'). Du kan nå sikte mot objekter — velg et mål øverst eller fra Katalogen.');
+      renderCalib();
     });
     var rst = document.getElementById('reset-cal');
     if (rst) rst.addEventListener('click', function(){
-      calPoints = []; cal = null; clearAlign(); renderCalStatus(); renderCalib();
+      calPoints = []; cal = null; lastCapture = null; clearAlign(); renderCalStatus(); renderCalib();
     });
   }
 
