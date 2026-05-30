@@ -42,6 +42,14 @@
 .ext:hover{border-color:var(--gold)}
 .ext .et{font-family:'Fraunces',serif;font-weight:600;color:var(--gold);font-size:.98rem}
 .ext .ed{font-size:.84rem;color:var(--ink-soft);margin-top:2px}
+
+/* Sammenleggbare paneler */
+.panel.collapsible > .panel-title{cursor:pointer;user-select:none;margin-bottom:0;transition:margin .2s}
+.panel.collapsible.open > .panel-title{margin-bottom:20px}
+.panel.collapsible > .panel-title .pt-arrow{margin-left:auto;color:var(--ink-faint);font-size:.9rem;transition:transform .2s;flex:none}
+.panel.collapsible.open > .panel-title .pt-arrow{transform:rotate(90deg)}
+.panel.collapsible > .panel-body{display:none}
+.panel.collapsible.open > .panel-body{display:block}
 </style>
 </head>
 <body>
@@ -174,6 +182,40 @@
 
 <script>
   initNightMode();
+  // Gjør hvert panel sammenleggbart (dropdown), default åpent. Tilstand huskes.
+  (function(){
+    var panels = document.querySelectorAll('.wrap .panel');
+    panels.forEach(function(panel, idx){
+      var title = panel.querySelector('.panel-title');
+      if (!title) return;
+      panel.classList.add('collapsible');
+      // pakk alt etter tittelen i en body
+      var body = document.createElement('div');
+      body.className = 'panel-body';
+      var n = title.nextSibling;
+      while (n){ var next = n.nextSibling; body.appendChild(n); n = next; }
+      panel.appendChild(body);
+      // pil
+      var arrow = document.createElement('span');
+      arrow.className = 'pt-arrow'; arrow.textContent = '▸';
+      title.appendChild(arrow);
+      // tilstand
+      var key = 'stjernekikkert_kol_'+idx;
+      var open = localStorage.getItem(key) !== '0';
+      panel.classList.toggle('open', open);
+      title.setAttribute('role','button');
+      title.setAttribute('tabindex','0');
+      title.setAttribute('aria-expanded', open?'true':'false');
+      function toggle(){
+        open = !open;
+        panel.classList.toggle('open', open);
+        title.setAttribute('aria-expanded', open?'true':'false');
+        try { localStorage.setItem(key, open?'1':'0'); } catch(e){}
+      }
+      title.addEventListener('click', toggle);
+      title.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); } });
+    });
+  })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
 </body>
