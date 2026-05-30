@@ -36,7 +36,7 @@ Appen trenger en **https-adresse** for at GPS, installasjon og offline skal virk
 Åpne adressen i nettleseren på telefonen (med nett første gang):
 
 - **iPhone (Safari):** Del-knappen ⬆️ → «Legg til på Hjem-skjerm».
-- **Android (Chrome):** meny ⋮ → «Installer app» / «Legg til på startskjerm».
+- **Android (Chrome):** meny ⋮ → «Installer app» / «Legg til på startskjerm». (Appen viser også en grønn **⬇ Installer**-knapp i menylinja når nettleseren tillater det.)
 
 Da får du eget ikon, fullskjerm, og **offline-bruk** etterpå — perfekt for et mørkt observasjonssted uten dekning.
 

@@ -70,6 +70,7 @@
     <a class="nav-link active" href="objekter.html">Katalog</a>
     <a class="nav-link" href="setup.html">Oppsett</a>
     <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <a class="nav-link" href="sikt.html">Sikt</a>
     <button class="nav-install" id="install-btn" style="display:none">⬇ Installer</button>
     <button class="nav-night" id="night-btn">🔴 Natt</button>
   </div>
@@ -213,6 +214,7 @@
       '<span class="cat-season">'+htmlEscape(o.season||'')+'</span></div>'+
       (o.expect?'<div class="expect"><b>I kikkerten:</b> '+htmlEscape(o.expect)+'</div>':'')+
       (o.anchor?'<div class="anchor-hint clickable" data-finder="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'"><b>Slik finner du den:</b> '+htmlEscape(o.anchor)+' <span class="tap">▸ vis kart</span></div>':'')+
+      ((o.type!=='planet'&&o.type!=='moon')?'<button class="aim-btn" data-aim="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" data-name="'+htmlEscape(o.name)+'">📡 Assistert sikting</button>':'')+
       '<div class="cat-foot">'+epGuidance(o)+
         '<button class="seen-btn'+(seen?' on':'')+'" data-seen="'+o.id+'">'+(seen?'<span class="ck">✓</span> Sett':'+ Sett det')+'</button></div>'+
       '</div>';
@@ -245,7 +247,13 @@
       return;
     }
     var a = e.target.closest('.anchor-hint.clickable');
-    if (a){ openFinderModal(a.getAttribute('data-finder'), parseFloat(a.getAttribute('data-ra')), parseFloat(a.getAttribute('data-dec'))); }
+    if (a){ openFinderModal(a.getAttribute('data-finder'), parseFloat(a.getAttribute('data-ra')), parseFloat(a.getAttribute('data-dec'))); return; }
+    var aim = e.target.closest('.aim-btn');
+    if (aim){
+      var tg = { name: aim.getAttribute('data-name'), ra: parseFloat(aim.getAttribute('data-ra')), dec: parseFloat(aim.getAttribute('data-dec')) };
+      try { localStorage.setItem('stjernekikkert_aim_target', JSON.stringify(tg)); } catch(err){}
+      window.location.href = 'sikt.html';
+    }
   });
 
   // ---- Finnekart-modal (FIND-4) ----

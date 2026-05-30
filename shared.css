@@ -54,6 +54,11 @@ body::before{
 }
 .nav-install:hover{background:rgba(138,217,156,.22)}
 
+/* Assistert sikting-knapp */
+.aim-btn{display:block;width:calc(100% - 32px);margin:0 16px 14px;padding:11px;border-radius:10px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:600;border:1px solid rgba(111,216,224,.4);color:var(--cyan);background:rgba(111,216,224,.1);transition:all .15s}
+.aim-btn:hover{background:rgba(111,216,224,.2)}
+.cat-card .aim-btn{width:100%;margin:0 0 12px}
+
 .wrap{position:relative;z-index:1;max-width:1080px;width:100%;margin:0 auto;padding:38px 18px 80px}
 
 header{text-align:center;margin-bottom:38px}

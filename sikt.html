@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sikt — Stjernekikkert</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%AD%90</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080b18">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+.banner{border-radius:12px;padding:14px 18px;margin-bottom:18px;font-size:.9rem;line-height:1.55}
+.banner.info{background:rgba(111,216,224,.07);border:1px solid rgba(111,216,224,.25);color:var(--ink-soft)}
+.banner.warn{background:rgba(232,131,90,.08);border:1px solid rgba(232,131,90,.3);color:var(--ink-soft)}
+.banner b{color:var(--cyan)}
+.banner.warn b{color:var(--rust)}
+
+.big-btn{width:100%;padding:14px;border-radius:12px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:600;border:2px solid var(--cyan);color:var(--cyan);background:rgba(111,216,224,.08);transition:all .15s;margin-bottom:10px}
+.big-btn:hover{background:rgba(111,216,224,.18)}
+.big-btn.gold{border-color:var(--gold);color:var(--gold);background:rgba(240,196,106,.08)}
+.big-btn.gold:hover{background:rgba(240,196,106,.18)}
+.big-btn:disabled{opacity:.4;cursor:default}
+
+.cal-status{font-family:'JetBrains Mono',monospace;font-size:.82rem;border-radius:10px;padding:10px 14px;margin-bottom:16px}
+.cal-status.none{background:rgba(232,131,90,.08);border:1px solid rgba(232,131,90,.3);color:var(--rust)}
+.cal-status.ok{background:rgba(138,217,156,.08);border:1px solid rgba(138,217,156,.35);color:var(--green)}
+
+.live{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.live-cell{background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.live-cell .lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px}
+.live-cell .val{font-family:'JetBrains Mono',monospace;font-size:1.7rem;font-weight:700;color:var(--ink);line-height:1}
+.live-cell .sub{font-size:.74rem;color:var(--ink-faint);margin-top:3px}
+
+.aim{background:var(--panel-soft);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center;margin-bottom:16px}
+.aim-target{font-family:'Fraunces',serif;font-weight:600;color:var(--gold);font-size:1.05rem;margin-bottom:12px}
+.aim-arrows{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,46px);gap:4px;max-width:200px;margin:0 auto 12px;align-items:center;justify-items:center}
+.aim-arrows .a{font-size:1.8rem;color:var(--ink-faint);transition:all .1s}
+.aim-arrows .a.hot{color:var(--cyan);transform:scale(1.3)}
+.aim-arrows .center{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--ink-soft)}
+.aim-arrows .center.locked{color:var(--green);font-weight:700}
+.aim-readout{font-family:'JetBrains Mono',monospace;font-size:.92rem;color:var(--ink-soft)}
+.aim-readout b{color:var(--cyan)}
+.aim-readout .lock{color:var(--green);font-weight:700}
+
+.star-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px}
+.star-opt{background:var(--panel-soft);border:1px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;text-align:left;font-family:'Outfit',sans-serif;color:var(--ink);transition:all .15s}
+.star-opt:hover{border-color:var(--gold)}
+.star-opt .sn{font-weight:600}
+.star-opt .sh{font-size:.8rem;color:var(--ink-soft);margin-top:2px}
+.star-opt .sp{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--cyan);margin-top:4px}
+.star-opt.below{opacity:.45}
+.star-opt.below .sp{color:var(--ink-faint)}
+
+.muted{color:var(--ink-faint)}
+.hidden{display:none}
+.step-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bg);background:var(--gold);border-radius:99px;padding:2px 10px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<script>if(localStorage.getItem('stjernekikkert_nightmode')==='1')document.body.classList.add('night-mode');</script>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">⭐ Stjernekikkert</a>
+    <a class="nav-link" href="index.html">Himmelen</a>
+    <a class="nav-link" href="objekter.html">Katalog</a>
+    <a class="nav-link" href="setup.html">Oppsett</a>
+    <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <a class="nav-link active" href="sikt.html">Sikt</a>
+    <button class="nav-install" id="install-btn" style="display:none">⬇ Installer</button>
+    <button class="nav-night" id="night-btn">🔴 Natt</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Telefonen som push-to-sikte</div>
+    <h1>Assistert <em>sikting</em></h1>
+    <p class="lede">Fest telefonen på teleskoptuben (eller hold den inntil), kalibrer mot en kjent stjerne, og la sensorene guide deg til objektet.</p>
+  </header>
+
+  <div id="sensor-gate"></div>
+
+  <!-- Kalibreringsstatus -->
+  <div id="cal-status"></div>
+
+  <!-- Live sensoravlesning -->
+  <div class="live">
+    <div class="live-cell"><div class="lbl">Telefon peker (azimut)</div><div class="val" id="cur-az">—</div><div class="sub" id="cur-az-dir"></div></div>
+    <div class="live-cell"><div class="lbl">Telefon peker (høyde)</div><div class="val" id="cur-alt">—</div><div class="sub">over horisonten</div></div>
+  </div>
+
+  <!-- Sikte-panel (vises når mål er valgt) -->
+  <section class="panel hidden" id="aim-panel">
+    <div class="aim">
+      <div class="aim-target" id="aim-target">—</div>
+      <div class="aim-arrows">
+        <span></span><span class="a" id="ar-up">▲</span><span></span>
+        <span class="a" id="ar-left">◀</span><span class="center" id="ar-center">—</span><span class="a" id="ar-right">▶</span>
+        <span></span><span class="a" id="ar-down">▼</span><span></span>
+      </div>
+      <div class="aim-readout" id="aim-readout">Beveg kikkerten …</div>
+    </div>
+    <button class="big-btn" id="clear-target">Velg annet mål</button>
+  </section>
+
+  <!-- Målvalg (når ingen mål) -->
+  <section class="panel" id="pick-panel">
+    <div class="panel-title"><span class="num">★</span> Velg hva du vil sikte mot</div>
+    <p class="hint" style="margin-bottom:12px">Kom hit fra et objekt i <a href="index.html" style="color:var(--gold)">Himmelen</a> eller <a href="objekter.html" style="color:var(--gold)">Katalogen</a> ved å trykke «Assistert sikting», eller velg en lys stjerne under for å øve.</p>
+    <div id="quick-targets" class="star-grid"></div>
+  </section>
+
+  <!-- Kalibrering -->
+  <section class="panel" id="calib-panel">
+    <div class="panel-title"><span class="num">⊕</span> Kalibrering</div>
+    <p class="hint" style="margin-bottom:12px">Pek kikkerten nøyaktig på en kjent stjerne du ser, og fang. To stjerner (helst langt fra hverandre) gir best presisjon.</p>
+    <div class="banner info" style="margin-bottom:14px">💡 <b>Først:</b> kalibrer telefonens kompass ved å bevege den i et liggende 8-tall noen ganger (samme bevegelse som Google Maps ber om). Hold telefonen unna metall mens du gjør det — gjerne et lite stykke fra teleskoptuben. Et stabilt kompass gir bedre sikting.</div>
+    <div id="calib-body"></div>
+  </section>
+
+  <footer>Sensorene i telefonen er upresise — regn med at objektet havner i søkeren, ikke midt i okularet. Finjuster siste biten for hånd. ✦</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var setup = loadSetup();
+  var lat = setup.location.lat, lon = setup.location.lon;
+
+  // ---- Sensortilstand ----
+  var sensorOK = false, rawAz = null, rawAlt = null;
+  var calPoints = [];                 // fangede kalibreringspunkter denne økten
+  var cal = loadAlign();              // lagret kalibrering
+  var target = null;                  // {name, ra, dec} valgt mål
+  var lockHold = 0;
+
+  // Mål fra forrige side (via localStorage-overlevering)
+  try {
+    var pend = JSON.parse(localStorage.getItem('stjernekikkert_aim_target') || 'null');
+    if (pend && pend.ra != null){ target = pend; localStorage.removeItem('stjernekikkert_aim_target'); }
+  } catch(e){}
+
+  // ---- Sensor-oppsett ----
+  function gateHtml(msg, btn){
+    return '<div class="banner warn"><b>Sensortilgang:</b> '+msg+(btn?'</div><button class="big-btn" id="enable-sensors">'+btn+'</button>':'</div>');
+  }
+  function setupSensors(){
+    var gate = document.getElementById('sensor-gate');
+    if (!window.DeviceOrientationEvent){
+      gate.innerHTML = '<div class="banner warn"><b>Ingen bevegelsessensor.</b> Enheten din støtter ikke retningssensorer — bruk tallene fra et objektkort manuelt i stedet.</div>';
+      return;
+    }
+    // iOS krever eksplisitt tillatelse via en knapp
+    if (typeof DeviceOrientationEvent.requestPermission === 'function'){
+      gate.innerHTML = gateHtml('iPhone krever at du gir tillatelse til bevegelse/retning.', '📡 Slå på sensorer');
+      document.getElementById('enable-sensors').addEventListener('click', function(){
+        DeviceOrientationEvent.requestPermission().then(function(res){
+          if (res === 'granted'){ gate.innerHTML=''; attach(); } else { gate.innerHTML = '<div class="banner warn">Tillatelse avslått. Du kan endre dette i Innstillinger → Safari.</div>'; }
+        }).catch(function(){ gate.innerHTML = '<div class="banner warn">Kunne ikke be om tillatelse.</div>'; });
+      });
+    } else {
+      // Android/desktop: koble direkte, men vis hint hvis ingen data kommer
+      gate.innerHTML = '<div class="banner info">Holder telefonen mot tuben? Sikt langs røret. Verdiene under oppdateres live.</div>';
+      attach();
+      setTimeout(function(){ if (!sensorOK) gate.innerHTML = '<div class="banner warn"><b>Ingen sensordata.</b> Sjekk at nettstedet kjører på https og at bevegelsessensorer er tillatt i nettleseren.</div>'; }, 2500);
+    }
+  }
+  function attach(){
+    window.addEventListener('deviceorientationabsolute', onOrient, true);
+    window.addEventListener('deviceorientation', onOrient, true);
+  }
+  function onOrient(e){
+    // alpha: kompass (0=nord). Bruk webkitCompassHeading på iOS hvis tilgjengelig.
+    var az;
+    if (typeof e.webkitCompassHeading === 'number'){ az = e.webkitCompassHeading; }
+    else if (e.alpha != null){ az = 360 - e.alpha; }   // alpha øker mot klokka
+    else return;
+    // beta: forover/bakover-vipp (-180..180). Når du sikter langs tuben i landskaps-
+    // /portrettmodus brukes beta som «høyde» grovt. Vi tar 90 - |beta| justering enkelt:
+    var alt = (e.beta != null) ? (e.beta - 0) : 0;
+    // normaliser alt til -90..90 (telefon flatt = 0 vipp ≈ peker mot horisonten når reist)
+    if (alt > 90) alt = 180 - alt; if (alt < -90) alt = -180 - alt;
+    rawAz = ((az % 360) + 360) % 360;
+    rawAlt = alt;
+    sensorOK = true;
+  }
+
+  // ---- Kalibreringsstatus ----
+  function renderCalStatus(){
+    var el = document.getElementById('cal-status');
+    if (cal){
+      el.className = 'cal-status ok';
+      el.textContent = '✓ Kalibrert ('+cal.type+'). Trykk «Nullstill kalibrering» nederst for å starte på nytt.';
+    } else {
+      el.className = 'cal-status none';
+      el.textContent = '⚠ Ikke kalibrert ennå — sikting blir unøyaktig. Kalibrer mot minst én stjerne nederst.';
+    }
+  }
+
+  // ---- Hurtigmål (lyse stjerner som er oppe) ----
+  function renderQuickTargets(){
+    var now = new Date();
+    var list = ALIGN_STARS.map(function(s){
+      var aa = altAz(s.ra, s.dec, now, lat, lon);
+      return {s:s, alt:aa.alt, az:aa.az};
+    }).sort(function(a,b){ return b.alt - a.alt; });
+    document.getElementById('quick-targets').innerHTML = list.map(function(x){
+      var up = x.alt >= 5;
+      return '<button class="star-opt'+(up?'':' below')+'" data-star="'+x.s.id+'">'+
+        '<div class="sn">'+htmlEscape(x.s.name)+'</div>'+
+        '<div class="sp">'+(up?('az '+Math.round(x.az)+'° · '+Math.round(x.alt)+'° opp · '+compassSimple(x.az)):'under horisonten nå')+'</div>'+
+        '</button>';
+    }).join('');
+  }
+
+  // ---- Sett mål ----
+  function setTarget(t){
+    target = t;
+    document.getElementById('pick-panel').classList.add('hidden');
+    document.getElementById('aim-panel').classList.remove('hidden');
+    document.getElementById('aim-target').textContent = '🎯 ' + t.name;
+  }
+  function clearTarget(){
+    target = null;
+    document.getElementById('aim-panel').classList.add('hidden');
+    document.getElementById('pick-panel').classList.remove('hidden');
+    renderQuickTargets();
+  }
+  document.getElementById('clear-target').addEventListener('click', clearTarget);
+  document.getElementById('quick-targets').addEventListener('click', function(e){
+    var b = e.target.closest('.star-opt'); if(!b) return;
+    var s = alignStarById(b.getAttribute('data-star'));
+    if (s) setTarget({name:s.name, ra:s.ra, dec:s.dec});
+  });
+
+  // ---- Kalibreringspanel ----
+  function renderCalib(){
+    var body = document.getElementById('calib-body');
+    var now = new Date();
+    var html = '';
+    if (calPoints.length){
+      html += '<div class="banner info">Fanget <b>'+calPoints.length+'</b> stjerne'+(calPoints.length>1?'r':'')+'. '+
+        (calPoints.length>=2?'God 2-stjerners kalibrering klar.':'Fang gjerne én til, langt unna den første, for bedre presisjon.')+'</div>';
+    }
+    html += '<div class="step-pill">Steg '+(calPoints.length+1)+'</div>';
+    html += '<p class="hint" style="margin-bottom:10px">Pek kikkerten nøyaktig på stjernen, sentrer den i okularet, og trykk «Fang». Velg en stjerne du ser godt:</p>';
+    var stars = ALIGN_STARS.map(function(s){
+      var aa = altAz(s.ra, s.dec, now, lat, lon); return {s:s, alt:aa.alt, az:aa.az};
+    }).filter(function(x){ return x.alt >= 5; }).sort(function(a,b){ return b.alt-a.alt; });
+    html += '<div class="star-grid">'+ stars.map(function(x){
+      return '<button class="star-opt" data-cal="'+x.s.id+'">'+
+        '<div class="sn">'+htmlEscape(x.s.name)+'</div>'+
+        '<div class="sh">'+htmlEscape(x.s.hint)+'</div>'+
+        '<div class="sp">az '+Math.round(x.az)+'° · '+Math.round(x.alt)+'° opp · '+compassSimple(x.az)+'</div>'+
+        '</button>';
+    }).join('') +'</div>';
+    if (calPoints.length>=1) html += '<button class="big-btn gold" id="finish-cal">Bruk kalibrering ('+calPoints.length+' stjerne'+(calPoints.length>1?'r':'')+')</button>';
+    if (cal || calPoints.length) html += '<button class="big-btn" id="reset-cal" style="border-color:var(--rust);color:var(--rust);background:rgba(232,131,90,.08)">Nullstill kalibrering</button>';
+    body.innerHTML = html;
+
+    body.querySelectorAll('[data-cal]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if (rawAz == null){ alert('Ingen sensordata ennå — sjekk sensortilgang øverst.'); return; }
+        var s = alignStarById(this.getAttribute('data-cal'));
+        var aa = altAz(s.ra, s.dec, new Date(), lat, lon);
+        calPoints.push({ azMeas:rawAz, altMeas:rawAlt, azTrue:aa.az, altTrue:aa.alt });
+        if (calPoints.length>2) calPoints = calPoints.slice(-2); // behold de to siste
+        renderCalib();
+      });
+    });
+    var fin = document.getElementById('finish-cal');
+    if (fin) fin.addEventListener('click', function(){
+      cal = buildCalibration(calPoints); saveAlign(cal); renderCalStatus();
+      document.getElementById('calib-body').scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+    var rst = document.getElementById('reset-cal');
+    if (rst) rst.addEventListener('click', function(){
+      calPoints = []; cal = null; clearAlign(); renderCalStatus(); renderCalib();
+    });
+  }
+
+  // ---- Live-løkke ----
+  function tick(){
+    if (rawAz != null){
+      var corr = applyCalibration(cal, rawAz, rawAlt);
+      document.getElementById('cur-az').textContent = Math.round(corr.az)+'°';
+      document.getElementById('cur-az-dir').textContent = compassSimple(corr.az);
+      document.getElementById('cur-alt').textContent = Math.round(corr.alt)+'°';
+
+      if (target){
+        var t = altAz(target.ra, target.dec, new Date(), lat, lon);
+        var d = aimDelta(corr.az, corr.alt, t.az, t.alt);
+        updateArrows(d, t);
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  function updateArrows(d, t){
+    var up=document.getElementById('ar-up'), dn=document.getElementById('ar-down'),
+        lf=document.getElementById('ar-left'), rt=document.getElementById('ar-right'),
+        ce=document.getElementById('ar-center'), ro=document.getElementById('aim-readout');
+    var TOL = 2.5; // grader = «truffet»
+    [up,dn,lf,rt].forEach(function(a){ a.classList.remove('hot'); });
+    var locked = (Math.abs(d.dAz) <= TOL && Math.abs(d.dAlt) <= TOL);
+    if (locked){
+      ce.textContent = '●'; ce.classList.add('locked');
+      ro.innerHTML = '<span class="lock">🎯 I sikte! Sjekk søkeren / okularet.</span>';
+      lockHold++;
+    } else {
+      ce.textContent = Math.round(d.dist)+'°'; ce.classList.remove('locked'); lockHold=0;
+      if (d.dAz > TOL) rt.classList.add('hot');
+      if (d.dAz < -TOL) lf.classList.add('hot');
+      if (d.dAlt > TOL) up.classList.add('hot');
+      if (d.dAlt < -TOL) dn.classList.add('hot');
+      var azTxt = d.dAz>=0 ? 'drei <b>høyre '+Math.round(Math.abs(d.dAz))+'°</b>' : 'drei <b>venstre '+Math.round(Math.abs(d.dAz))+'°</b>';
+      var altTxt = d.dAlt>=0 ? 'vipp <b>opp '+Math.round(Math.abs(d.dAlt))+'°</b>' : 'vipp <b>ned '+Math.round(Math.abs(d.dAlt))+'°</b>';
+      ro.innerHTML = azTxt + ' · ' + altTxt + ' &nbsp;(' + compassSimple(t.az) + ' ' + Math.round(t.alt) + '° opp)';
+    }
+  }
+
+  // ---- Init ----
+  setupSensors();
+  renderCalStatus();
+  renderCalib();
+  if (target){ setTarget(target); } else { renderQuickTargets(); }
+  initNightMode();
+  initInstall();
+  requestAnimationFrame(tick);
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+</body>
+</html>

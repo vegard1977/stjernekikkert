@@ -1023,6 +1023,81 @@ function framingVerdict(sizeArcmin, fovArcmin) {
   return {text:'svært lite — øk forstørrelsen', tight:false};
 }
 
+// ================================================================
+// SENSOR-ASSISTERT SIKTING (telefon som push-to)
+// ================================================================
+var ALIGN_KEY = 'stjernekikkert_align_v1';
+
+// Lyse, lett gjenkjennelige kalibreringsstjerner spredt over himmelen.
+// ra i timer, dec i grader. Brukes til 1- eller 2-stjerners kalibrering.
+var ALIGN_STARS = [
+  {id:'polaris',   name:'Polaris (Nordstjernen)', ra:2.530,  dec:89.26, m:2.0, hint:'Står nesten stille rett i nord — finn den via Karlsvognas to ytterste kar-stjerner.'},
+  {id:'vega',      name:'Vega (Lyra)',            ra:18.615, dec:38.78, m:0.0, hint:'Skinnende klar, høyt i øst/sørøst om sommeren.'},
+  {id:'arcturus',  name:'Arcturus (Bootes)',      ra:14.261, dec:19.18, m:0.0, hint:'Klar oransje stjerne; følg «buen» fra Karlsvognas håndtak.'},
+  {id:'capella',   name:'Capella (Auriga)',       ra:5.278,  dec:46.00, m:0.1, hint:'Svært klar, sirkumpolar — lavt i nord/nordvest om sommeren.'},
+  {id:'deneb',     name:'Deneb (Svanen)',         ra:20.690, dec:45.28, m:1.3, hint:'Toppen av Det nordlige kors, høyt i øst om kvelden.'},
+  {id:'altair',    name:'Altair (Ørnen)',         ra:19.846, dec:8.87,  m:0.8, hint:'Klar stjerne i sommertriangelet, lavere i sør.'},
+  {id:'betelgeuse',name:'Betelgeuse (Orion)',     ra:5.919,  dec:7.41,  m:0.5, hint:'Oransje skulderstjerne i Orion (vinter).'},
+  {id:'rigel',     name:'Rigel (Orion)',          ra:5.242,  dec:-8.20, m:0.1, hint:'Blå-hvit fotstjerne i Orion (vinter).'},
+  {id:'sirius',    name:'Sirius (Store hund)',    ra:6.752,  dec:-16.72,m:-1.5,hint:'Himmelens klareste stjerne, lavt i sør (vinter).'},
+  {id:'pollux',    name:'Pollux (Tvillingene)',   ra:7.755,  dec:28.03, m:1.1, hint:'Den lyseste av tvillingstjernene.'},
+  {id:'dubhe',     name:'Dubhe (Karlsvogna)',     ra:11.062, dec:61.75, m:1.8, hint:'Fremre kar-stjerne i Karlsvogna (peker mot Polaris).'},
+  {id:'schedar',   name:'Schedar (Cassiopeia)',   ra:0.675,  dec:56.54, m:2.2, hint:'Klar stjerne i Cassiopeias W.'},
+  {id:'aldebaran', name:'Aldebaran (Tyren)',      ra:4.599,  dec:16.51, m:0.9, hint:'Oransje øye i Tyren, ved Hyadene.'},
+  {id:'regulus',   name:'Regulus (Løven)',        ra:10.139, dec:11.97, m:1.4, hint:'Foten av «sigden» i Løven (vår).'}
+];
+function alignStarById(id){ for(var i=0;i<ALIGN_STARS.length;i++) if(ALIGN_STARS[i].id===id) return ALIGN_STARS[i]; return null; }
+
+function loadAlign(){
+  try { return JSON.parse(localStorage.getItem(ALIGN_KEY)) || null; } catch(e){ return null; }
+}
+function saveAlign(a){ try { localStorage.setItem(ALIGN_KEY, JSON.stringify(a)); } catch(e){} }
+function clearAlign(){ try { localStorage.removeItem(ALIGN_KEY); } catch(e){} }
+
+// Et kalibreringspunkt: telefonens målte (azMeas, altMeas) mens den peker på en
+// stjerne som i virkeligheten står på (azTrue, altTrue) på et gitt tidspunkt.
+// calcAzimuthOffset håndterer at azimut er sirkulær (wrap rundt 360°).
+function angDiffDeg(a, b){ var d = (a - b) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return d; }
+
+// Bygg kalibrering fra 1 eller 2 punkter.
+// Punkt: {azMeas, altMeas, azTrue, altTrue}
+// 1 stjerne: ren forskyvning (offset) i az og alt.
+// 2 stjerner: forskyvning + lineær skala på az (korrigerer kompass-drift over himmelen).
+function buildCalibration(points){
+  if (!points || !points.length) return null;
+  if (points.length === 1){
+    var p = points[0];
+    return { azOffset: angDiffDeg(p.azTrue, p.azMeas), altOffset: p.altTrue - p.altMeas, azScale: 1, type:'1-stjerne' };
+  }
+  // 2-stjerners: løs azTrue = azScale*azMeas + azOffset (på «utfoldede» az-verdier)
+  var p1 = points[0], p2 = points[1];
+  // fold ut az slik at differansen er kontinuerlig
+  var m1 = p1.azMeas, m2 = p1.azMeas + angDiffDeg(p2.azMeas, p1.azMeas);
+  var t1 = p1.azTrue, t2 = p1.azTrue + angDiffDeg(p2.azTrue, p1.azTrue);
+  var dm = (m2 - m1);
+  var azScale = Math.abs(dm) > 5 ? (t2 - t1) / dm : 1;   // unngå ustabilitet hvis stjernene står for nær
+  var azOffset = t1 - azScale * m1;
+  var altOffset = ((p1.altTrue - p1.altMeas) + (p2.altTrue - p2.altMeas)) / 2;
+  return { azOffset: azOffset, altOffset: altOffset, azScale: azScale, type:'2-stjerner' };
+}
+
+// Bruk kalibrering på en rå sensormåling → korrigert (sann) az/alt.
+function applyCalibration(cal, azMeas, altMeas){
+  if (!cal) return { az: ((azMeas%360)+360)%360, alt: altMeas };
+  var az = cal.azScale * azMeas + cal.azOffset;
+  az = ((az % 360) + 360) % 360;
+  return { az: az, alt: altMeas + cal.altOffset };
+}
+
+// Hvor mye må du dreie/vippe fra der du peker nå til målet?
+// Returnerer {dAz (-180..180, + = drei høyre/med klokka), dAlt (+ = vipp opp), dist}
+function aimDelta(curAz, curAlt, tgtAz, tgtAlt){
+  var dAz = angDiffDeg(tgtAz, curAz);
+  var dAlt = tgtAlt - curAlt;
+  var dist = Math.sqrt(dAz*dAz + dAlt*dAlt);
+  return { dAz: dAz, dAlt: dAlt, dist: dist };
+}
+
 // ---- Nattmodus (ARCH-2) ----
 function initNightMode() {
   var on = localStorage.getItem(NM_KEY) === '1';

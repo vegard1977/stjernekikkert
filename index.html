@@ -292,6 +292,7 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
     <a class="nav-link" href="objekter.html">Katalog</a>
     <a class="nav-link" href="setup.html">Oppsett</a>
     <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <a class="nav-link" href="sikt.html">Sikt</a>
     <button class="nav-install" id="install-btn" style="display:none">⬇ Installer</button>
     <button class="nav-night" id="night-btn" title="Nattmodus – rødt lys bevarer mørketilpasning">🔴 Natt</button>
   </div>
@@ -966,9 +967,11 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
 
     var anchorHtml = (o.anchor && !rs.neverAbove) ? '<div class="anchor-hint clickable" data-finder="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" style="margin:0 16px 12px"><b>Slik finner du den:</b> '+htmlEscape(o.anchor)+' <span class="tap">▸ vis kart</span></div>' : '';
 
+    var aimHtml = (!rs.neverAbove) ? '<button class="aim-btn" data-aim="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" data-name="'+htmlEscape(o.name)+'">📡 Assistert sikting</button>' : '';
+
     return '<div class="'+cardClass+'"><div class="obj-main"><div class="obj-emo">'+o.emo+'</div>'+
       '<div class="obj-body"><div class="obj-name">'+htmlEscape(o.name)+typeTag+'</div>'+
-      '<div class="obj-why">'+htmlEscape(o.why)+'</div>'+subHtml+seenBtn+'</div>'+altBlock+'</div>'+winHtml+epHtml+allEpHtml+anchorHtml+'</div>';
+      '<div class="obj-why">'+htmlEscape(o.why)+'</div>'+subHtml+seenBtn+'</div>'+altBlock+'</div>'+winHtml+epHtml+allEpHtml+anchorHtml+aimHtml+'</div>';
   }
 
   // ---- Kompass-SVG (uendret prinsipp) ----
@@ -1176,7 +1179,13 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
       return;
     }
     var aBtn = e.target.closest && e.target.closest('.anchor-hint.clickable');
-    if (aBtn){ openFinderModal(aBtn.getAttribute('data-finder'), parseFloat(aBtn.getAttribute('data-ra')), parseFloat(aBtn.getAttribute('data-dec'))); }
+    if (aBtn){ openFinderModal(aBtn.getAttribute('data-finder'), parseFloat(aBtn.getAttribute('data-ra')), parseFloat(aBtn.getAttribute('data-dec'))); return; }
+    var aimBtn = e.target.closest && e.target.closest('.aim-btn');
+    if (aimBtn){
+      var tg = { name: aimBtn.getAttribute('data-name'), ra: parseFloat(aimBtn.getAttribute('data-ra')), dec: parseFloat(aimBtn.getAttribute('data-dec')) };
+      try { localStorage.setItem('stjernekikkert_aim_target', JSON.stringify(tg)); } catch(err){}
+      window.location.href = 'sikt.html';
+    }
   });
 
   initNightMode();
