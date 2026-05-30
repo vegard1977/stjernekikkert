@@ -1,0 +1,20 @@
+{
+  "name": "Stjernekikkert",
+  "short_name": "Stjernekikkert",
+  "description": "Planlegg stjernekikking med en 8\" Dobson fra Norge — Måne, planeter, dypromobjekter, finnekart og mørke-tidslinje.",
+  "lang": "no",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080b18",
+  "theme_color": "#080b18",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

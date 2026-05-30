@@ -1,0 +1,180 @@
+/* ================================================================
+   SHARED STYLES — Stjernekikkert (felles for alle sider)
+   ================================================================ */
+:root{
+  --bg:#080b18; --bg-2:#0e1430; --panel:#121a36; --panel-soft:#16204a;
+  --ink:#e7ecff; --ink-soft:#aab6dc; --ink-faint:#97a2cc;
+  --gold:#f0c46a; --gold-deep:#caa14a; --cyan:#6fd8e0;
+  --rust:#e8835a; --green:#8ad99c;
+  --line:rgba(160,176,230,0.16); --line-strong:rgba(160,176,230,0.30);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Outfit',-apple-system,sans-serif;color:var(--ink);
+  background:radial-gradient(1100px 700px at 78% -8%,#1d2657 0%,transparent 60%),
+    radial-gradient(900px 600px at 10% 110%,#15123a 0%,transparent 55%),var(--bg);
+  line-height:1.55;-webkit-font-smoothing:antialiased;
+  position:relative;overflow-x:hidden;
+}
+/* Stjernehimmel-lag (position:fixed i stedet for background-attachment:fixed → jevnere på mobil, PERF-2) */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 22%,#fff 50%,transparent),
+    radial-gradient(1px 1px at 38% 9%,#cfe0ff 50%,transparent),
+    radial-gradient(1.6px 1.6px at 64% 31%,#fff 50%,transparent),
+    radial-gradient(1px 1px at 84% 14%,#fff 50%,transparent),
+    radial-gradient(1.2px 1.2px at 24% 64%,#d8e6ff 50%,transparent),
+    radial-gradient(1px 1px at 53% 79%,#fff 50%,transparent),
+    radial-gradient(1.5px 1.5px at 91% 58%,#fff 50%,transparent),
+    radial-gradient(1px 1px at 8% 88%,#cfe0ff 50%,transparent);
+  opacity:.45;
+}
+
+/* NAV */
+.nav{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100}
+.nav-inner{max-width:1080px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:4px;height:52px}
+.nav-brand{font-family:'Fraunces',serif;font-size:1.05rem;color:var(--gold);margin-right:auto;text-decoration:none}
+.nav-link{color:var(--ink-soft);text-decoration:none;font-size:.87rem;padding:6px 12px;border-radius:8px;transition:all .15s;white-space:nowrap}
+.nav-link:hover{background:var(--panel-soft);color:var(--ink)}
+.nav-link.active{background:var(--panel-soft);color:var(--gold)}
+.nav-night{
+  background:none;border:1px solid var(--line-strong);color:var(--ink-faint);
+  border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.82rem;transition:all .15s;
+  white-space:nowrap;font-family:'Outfit',sans-serif;
+}
+.nav-night:hover{border-color:var(--gold);color:var(--gold)}
+.nav-night.active{border-color:var(--rust);color:var(--rust);background:rgba(232,131,90,.1)}
+
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:38px 22px 80px}
+
+header{text-align:center;margin-bottom:38px}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,4.8vw,3.1rem);line-height:1.05;letter-spacing:-.01em}
+h1 em{font-style:italic;color:var(--gold);font-weight:500}
+.lede{color:var(--ink-soft);margin-top:10px;font-size:.98rem;max-width:560px;margin-inline:auto}
+
+.panel{
+  background:linear-gradient(180deg,var(--panel) 0%,var(--bg-2) 100%);
+  border:1px solid var(--line);border-radius:16px;padding:26px 24px;margin-bottom:22px;
+  box-shadow:0 24px 48px -28px rgba(0,0,0,.7);
+}
+.panel-title{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:10px;margin-bottom:20px;
+}
+.panel-title::before{content:"";width:18px;height:1px;background:var(--gold);flex:none}
+.panel-title .num{font-size:10px;color:var(--bg);background:var(--gold);width:18px;height:18px;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:700}
+
+.hint{font-size:.82rem;color:var(--ink-faint);margin-top:9px}
+footer{text-align:center;color:var(--ink-faint);font-size:.8rem;margin-top:38px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em}
+
+/* Felles type-tagger (samkjørt farge på tvers av sider, ARCH-3) */
+.type-tag{
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;
+  padding:2px 7px;border-radius:99px;text-transform:uppercase;font-weight:500;white-space:nowrap;
+}
+.type-tag.cluster{background:rgba(138,217,156,.12);color:var(--green)}
+.type-tag.globular{background:rgba(111,216,224,.12);color:var(--cyan)}
+.type-tag.galaxy{background:rgba(232,131,90,.12);color:var(--rust)}
+.type-tag.nebula{background:rgba(160,176,230,.16);color:#b4c2f0}
+.type-tag.double{background:rgba(240,196,106,.14);color:var(--gold)}
+.type-tag.planet{background:rgba(240,196,106,.14);color:var(--gold)}
+.type-tag.moon{background:rgba(255,255,255,.12);color:#e7ecff}
+
+/* "Sett det"-knapp (observasjonslogg, FIND-1) */
+.seen-btn{
+  background:none;border:1px solid var(--line-strong);color:var(--ink-faint);
+  border-radius:99px;padding:4px 11px;cursor:pointer;font-family:'Outfit',sans-serif;
+  font-size:.76rem;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+}
+.seen-btn:hover{border-color:var(--green);color:var(--green)}
+.seen-btn.on{border-color:var(--green);color:var(--green);background:rgba(138,217,156,.12)}
+.seen-btn .ck{font-weight:700}
+
+/* Synsfelt/innramming (FIND-2) */
+.fov-note{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-faint);margin-top:3px}
+.fov-note b{color:var(--cyan)}
+.fov-note.tight b{color:var(--rust)}
+
+/* Forventningstekst (EYE-1) */
+.expect{
+  font-size:.8rem;color:var(--ink-soft);margin-top:6px;padding:7px 10px;
+  background:rgba(255,255,255,.03);border-left:2px solid var(--gold-deep);border-radius:0 7px 7px 0;
+}
+.expect b{color:var(--gold)}
+
+/* Anker-/finne-hint (FIND-4) */
+.anchor-hint{
+  font-size:.8rem;color:var(--ink-soft);margin-top:6px;padding:7px 10px;
+  background:rgba(111,216,224,.05);border-left:2px solid var(--cyan);border-radius:0 7px 7px 0;
+}
+.anchor-hint b{color:var(--cyan)}
+.anchor-hint.clickable{cursor:pointer;transition:background .15s}
+.anchor-hint.clickable:hover{background:rgba(111,216,224,.12)}
+.anchor-hint .tap{color:var(--cyan);font-size:.74rem;white-space:nowrap}
+
+/* Finnekart-modal (FIND-4) */
+.finder-modal{display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center}
+.finder-modal.show{display:flex}
+.fm-bg{position:absolute;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px)}
+.fm-box{position:relative;z-index:1;background:var(--panel);border:1px solid var(--line-strong);border-radius:20px;padding:18px 20px 16px;width:94vw;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.8)}
+.fm-title{font-family:'Fraunces',serif;font-size:1.12rem;font-weight:600;color:var(--ink);margin-bottom:4px}
+.fm-chart{margin:6px auto 8px;width:100%;max-width:520px}
+.fm-chart svg{width:auto;height:auto;max-width:100%;max-height:56vh;display:block;margin:0 auto;border-radius:12px}
+/* Nettbrett/PC: større, men høyde-tak hindrer scroll på 1080 */
+@media(min-width:760px){
+  .fm-box{max-width:680px;padding:22px 26px 18px}
+  .fm-chart{max-width:600px}
+  .fm-title{font-size:1.28rem}
+  .fm-hint{font-size:1rem}
+}
+@media(min-width:1100px){
+  .fm-box{max-width:700px}
+  .fm-chart{max-width:620px}
+}
+/* Mobil: utnytt bredden, mindre luft */
+@media(max-width:480px){
+  .fm-box{width:97vw;padding:16px 12px 12px;border-radius:16px}
+  .fm-chart{max-width:100%}
+  .fm-chart svg{max-height:60vh}
+}
+.fm-hint{font-size:.9rem;color:var(--ink-soft);line-height:1.5;margin-bottom:10px}
+.fm-hint b{color:var(--cyan)}
+.fm-note{font-size:.76rem;color:var(--ink-faint);background:rgba(255,255,255,.03);border-radius:8px;padding:9px 11px;margin-bottom:14px;line-height:1.45}
+.fm-note b{color:var(--cyan)}
+.fm-close{background:none;border:1px solid var(--line-strong);color:var(--ink-faint);padding:8px 22px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.88rem;transition:all .15s}
+.fm-close:hover{border-color:var(--rust);color:var(--rust)}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:200;
+  background:var(--green);color:#071a0f;border-radius:10px;
+  padding:10px 18px;font-weight:600;font-size:.9rem;
+  opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ===== NATTMODUS ===== */
+body.night-mode{
+  --bg:#0d0101; --bg-2:#130101; --panel:#1a0202; --panel-soft:#200303;
+  --ink:#ff9a88; --ink-soft:#e0604a; --ink-faint:#b35333;
+  --gold:#ff5a2a; --gold-deep:#cc1100; --cyan:#ff6a3a;
+  --rust:#ff7a52; --green:#cc7a44;
+  --line:rgba(220,90,60,0.22); --line-strong:rgba(220,90,60,0.38);
+  background:radial-gradient(1100px 700px at 78% -8%,#2a0800 0%,transparent 60%),
+    radial-gradient(900px 600px at 10% 110%,#1a0200 0%,transparent 55%),var(--bg);
+}
+body.night-mode::before{
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 22%,#ff3300 50%,transparent),
+    radial-gradient(1px 1px at 38% 9%,#ff4422 50%,transparent),
+    radial-gradient(1.6px 1.6px at 64% 31%,#dd1100 50%,transparent),
+    radial-gradient(1px 1px at 84% 14%,#ff2200 50%,transparent),
+    radial-gradient(1.2px 1.2px at 24% 64%,#ee2200 50%,transparent),
+    radial-gradient(1px 1px at 53% 79%,#ff1100 50%,transparent),
+    radial-gradient(1.5px 1.5px at 91% 58%,#dd2200 50%,transparent),
+    radial-gradient(1px 1px at 8% 88%,#ff3311 50%,transparent);
+  opacity:.3;
+}

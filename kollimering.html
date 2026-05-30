@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kollimering — Stjernekikkert</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%AD%90</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080b18">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+.intro{background:rgba(240,196,106,.07);border:1px solid rgba(240,196,106,.25);border-radius:12px;padding:16px 18px;margin-bottom:22px;font-size:.92rem;color:var(--ink-soft);line-height:1.6}
+.intro b{color:var(--gold)}
+
+.step{display:grid;grid-template-columns:auto 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--line)}
+.step:last-child{border-bottom:none}
+.step-num{width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--bg);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1rem;flex:none}
+.step-body h3{font-family:'Fraunces',serif;font-size:1.12rem;font-weight:600;color:var(--ink);margin-bottom:6px}
+.step-body p{font-size:.92rem;color:var(--ink-soft);line-height:1.6;margin-bottom:8px}
+.step-body p:last-child{margin-bottom:0}
+.step-body b{color:var(--ink)}
+.step-fig{margin:12px 0;display:flex;justify-content:center}
+.step-fig svg{max-width:240px;width:100%;height:auto}
+.tip{background:rgba(111,216,224,.06);border-left:2px solid var(--cyan);border-radius:0 7px 7px 0;padding:8px 12px;font-size:.85rem;color:var(--ink-soft);margin-top:8px}
+.tip b{color:var(--cyan)}
+.warn{background:rgba(232,131,90,.08);border-left:2px solid var(--rust);border-radius:0 7px 7px 0;padding:8px 12px;font-size:.85rem;color:var(--ink-soft);margin-top:8px}
+.warn b{color:var(--rust)}
+
+.tool-list{display:grid;gap:8px;margin-top:10px}
+.tool{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:var(--ink-soft)}
+.tool .em{font-size:1.1rem;flex:none}
+.tool b{color:var(--ink)}
+
+.ext{display:block;background:var(--panel-soft);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin-top:10px;text-decoration:none;transition:border-color .15s}
+.ext:hover{border-color:var(--gold)}
+.ext .et{font-family:'Fraunces',serif;font-weight:600;color:var(--gold);font-size:.98rem}
+.ext .ed{font-size:.84rem;color:var(--ink-soft);margin-top:2px}
+</style>
+</head>
+<body>
+<script>if(localStorage.getItem('stjernekikkert_nightmode')==='1')document.body.classList.add('night-mode');</script>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">⭐ Stjernekikkert</a>
+    <a class="nav-link" href="index.html">Himmelen</a>
+    <a class="nav-link" href="objekter.html">Katalog</a>
+    <a class="nav-link" href="setup.html">Oppsett</a>
+    <a class="nav-link active" href="kollimering.html">Kollimering</a>
+    <button class="nav-night" id="night-btn">🔴 Natt</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Vedlikehold · 8″ Dobson</div>
+    <h1>Kollimer<em>ing</em></h1>
+    <p class="lede">Å justere speilene så lyset samles riktig. En fersk kollimering er forskjellen mellom uskarpe og knivskarpe planeter.</p>
+  </header>
+
+  <div class="intro">
+    Kollimering betyr å stille inn de to speilene i kikkerten slik at de peker nøyaktig mot hverandre og mot okularet. En Dobson rister seg lett ut av justering under transport, så <b>sjekk hver gang du har flyttet kikkerten</b>. Det tar et par minutter når du har gjort det noen ganger. Du trenger ikke verktøy for milliardstjerner — bare litt tålmodighet og dagslys første gang.
+  </div>
+
+  <section class="panel">
+    <div class="panel-title"><span class="num">✦</span> Det du trenger</div>
+    <div class="tool-list">
+      <div class="tool"><span class="em">🔘</span><div><b>En kollimeringskork</b> (følger ofte med) eller et billig <b>kollimeringsokular</b>. En enkel hjemmelaget kork med et lite hull i midten fungerer også.</div></div>
+      <div class="tool"><span class="em">🔧</span><div>Eventuelt en <b>unbrakonøkkel/skrutrekker</b> for hovedspeilet — sjekk hvilke skruer din modell har. Mange Sky-Watcher har vingeskruer du kan vri for hånd.</div></div>
+      <div class="tool"><span class="em">💡</span><div>Godt lys første gang. Gjør det gjerne <b>innendørs på dagtid</b> mot en lys vegg til du kjenner grepet.</div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><span class="num">1</span> Forstå de to speilene</div>
+    <div class="step" style="border-bottom:none;padding-top:0">
+      <div class="step-num">i</div>
+      <div class="step-body">
+        <p>En Newton-reflektor (som Dobson-en din) har to speil: et stort <b>hovedspeil</b> i bunnen, og et lite <b>sekundærspeil</b> (fangspeil) på skrå oppe ved åpningen, som kaster lyset ut til okularet.</p>
+        <p>Kollimering = få begge til å stå rett. Du justerer dem med tre små skruer på hver. Målet er at alt ser <b>konsentrisk</b> ut når du ser ned i okularholderen — sirkler inni sirkler, alle med samme sentrum.</p>
+        <div class="step-fig">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="90" fill="#0c1024" stroke="rgba(160,176,230,.3)"/>
+            <circle cx="100" cy="100" r="64" fill="none" stroke="#6fd8e0" stroke-width="2"/>
+            <circle cx="100" cy="100" r="38" fill="none" stroke="#aab6dc" stroke-width="1.5"/>
+            <circle cx="100" cy="100" r="14" fill="none" stroke="#f0c46a" stroke-width="2"/>
+            <circle cx="100" cy="100" r="3" fill="#f0c46a"/>
+            <text x="100" y="186" fill="#8590bd" font-family="monospace" font-size="9" text-anchor="middle">godt kollimert: alt sentrert</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><span class="num">2</span> Sekundærspeilet (grovjustering)</div>
+    <div class="step" style="border-bottom:none;padding-top:0">
+      <div class="step-num">→</div>
+      <div class="step-body">
+        <p>Sett kollimeringskorken i okularholderen og se ned. Du skal se det runde sekundærspeilet midt i synsfeltet.</p>
+        <p>Hvis det lille speilet ser <b>forskjøvet eller ovalt ut til siden</b>, juster de tre skruene på spindelen som holder det, til speilet er <b>sentrert og rundt</b> rett under hullet i korken.</p>
+        <div class="tip"><b>Sjelden nødvendig:</b> sekundærspeilet flytter seg nesten aldri. Hopp som regel rett til steg 3 — sjekk dette bare hvis bildet ser veldig galt ut.</div>
+        <div class="step-fig">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="90" fill="#0c1024" stroke="rgba(160,176,230,.3)"/>
+            <ellipse cx="118" cy="88" rx="50" ry="44" fill="none" stroke="var(--rust)" stroke-width="2"/>
+            <circle cx="100" cy="100" r="3" fill="#f0c46a"/>
+            <path d="M150 70 L168 58" stroke="var(--rust)" stroke-width="1.5"/>
+            <text x="172" y="56" fill="var(--rust)" font-family="monospace" font-size="9">forskjøvet</text>
+            <text x="100" y="186" fill="#8590bd" font-family="monospace" font-size="9" text-anchor="middle">sentrér det runde speilet</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><span class="num">3</span> Hovedspeilet (finjustering — den viktige)</div>
+    <div class="step" style="border-bottom:none;padding-top:0">
+      <div class="step-num">★</div>
+      <div class="step-body">
+        <p>Dette er justeringen du gjør oftest. I korken ser du nå refleksjonen av hovedspeilet, og midt i det en liten <b>ring eller prikk</b> (de fleste Sky-Watcher har en påklistret midtmarkering).</p>
+        <p>Bruk de tre <b>justeringsskruene bak på hovedspeilet</b> (i bunnen av tuben). Vri litt om gangen, og se hvordan midtringen flytter seg. Målet: få midtringen til å ligge <b>midt i sirkelen</b> du ser i korken — perfekt konsentrisk.</p>
+        <div class="tip"><b>Liten vri, sjekk, gjenta.</b> En åttendels omdreining flytter mye. Jobb deg innover mot sentrum.</div>
+        <div class="warn"><b>Husk låseskruene:</b> mange hovedspeil har tre låseskruer i tillegg til de tre justeringsskruene. Løsne lås før justering, stram forsiktig etterpå.</div>
+        <div class="step-fig">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="90" fill="#0c1024" stroke="rgba(160,176,230,.3)"/>
+            <circle cx="100" cy="100" r="64" fill="none" stroke="#6fd8e0" stroke-width="2"/>
+            <circle cx="116" cy="86" r="16" fill="none" stroke="#f0c46a" stroke-width="2"/>
+            <circle cx="116" cy="86" r="3" fill="#f0c46a"/>
+            <path d="M100 100 L116 86" stroke="var(--rust)" stroke-width="1.3" stroke-dasharray="3 3"/>
+            <text x="100" y="186" fill="#8590bd" font-family="monospace" font-size="9" text-anchor="middle">flytt midtringen til sentrum</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><span class="num">4</span> Finsjekk på en stjerne</div>
+    <div class="step" style="border-bottom:none;padding-top:0">
+      <div class="step-num">✓</div>
+      <div class="step-body">
+        <p>Ute om kvelden: pek på en middels lys stjerne, sentrer den, og bruk høy forstørrelse. Vri fokus litt <b>ut av fokus</b> så stjernen blir en liten rund skive med ringer.</p>
+        <p>Er ringene <b>jevne og sentrerte</b> rundt et midthull, er kollimeringen god. Er de skjeve mot én side, juster hovedspeilet bittelitt den veien og sjekk igjen.</p>
+        <div class="tip"><b>Polaris</b> er fin å øve på — den står nesten stille, så du slipper å chase den med en Dobson uten sporing.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title"><span class="num">↗</span> Grundigere guider</div>
+    <p class="hint" style="margin-bottom:6px">Vil du ha bilder og detaljer, er disse skrevet for akkurat denne typen kikkert (krever nett):</p>
+    <a class="ext" href="https://www.astro-baby.com/astrobaby/help/collimation-guide-for-newtonian-reflectors/" target="_blank" rel="noopener">
+      <div class="et">Astro-Baby — kollimeringsguide ↗</div>
+      <div class="ed">Grundig, bildebasert steg-for-steg, illustrert med en Sky-Watcher 200P (200 mm) — praktisk talt samme kikkert som din.</div>
+    </a>
+    <a class="ext" href="https://garyseronik.com/a-beginners-guide-to-collimation/" target="_blank" rel="noopener">
+      <div class="et">Gary Seronik — nybegynnerguide ↗</div>
+      <div class="ed">Klar og kortfattet innføring skrevet eksplisitt for nybegynnere.</div>
+    </a>
+  </section>
+
+  <footer>Kollimering tar et par minutter når du har grepet — og gir merkbart skarpere planeter ✦</footer>
+</div>
+
+<script>
+  initNightMode();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+</body>
+</html>

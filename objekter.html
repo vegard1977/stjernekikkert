@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Objektkatalog — Stjernekikkert</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%AD%90</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080b18">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.filter-btn{background:var(--panel-soft);color:var(--ink-soft);border:1px solid var(--line-strong);border-radius:99px;padding:7px 15px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.85rem;transition:all .15s}
+.filter-btn:hover{border-color:var(--gold);color:var(--ink)}
+.filter-btn.active{background:rgba(240,196,106,.14);border-color:var(--gold);color:var(--gold)}
+
+.log-count{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-faint);margin-bottom:16px}
+.log-count b{color:var(--green)}
+
+.cat-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.cat-card{background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+.cat-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan)}
+.cat-card.t-galaxy::before{background:var(--rust)}
+.cat-card.t-globular::before{background:var(--cyan)}
+.cat-card.t-nebula::before{background:#b4c2f0}
+.cat-card.t-double::before,.cat-card.t-cluster::before{background:var(--green)}
+.cat-card.t-planet::before{background:var(--gold)}
+.cat-card.t-moon::before{background:#e7ecff}
+.cat-head{display:flex;align-items:flex-start;gap:12px}
+.cat-emo{font-size:1.7rem;line-height:1}
+.cat-title{flex:1;min-width:0}
+.cat-name{font-family:'Fraunces',serif;font-size:1.08rem;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cat-why{font-size:.85rem;color:var(--ink-soft);margin-top:3px}
+.cat-sub{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint);margin-top:5px}
+.cat-season{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.cat-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.cat-ep{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-soft)}
+.cat-ep b{color:var(--gold)}
+.cat-buy{font-size:.8rem;color:var(--ink-soft);background:rgba(240,196,106,.07);border-radius:7px;padding:6px 10px;margin-top:8px;width:100%}
+.cat-buy a{color:var(--gold);font-weight:600;text-decoration:none}
+.seen-btn{margin-left:auto}
+
+/* Merker (ENG-1) */
+.badges-wrap{margin-bottom:18px}
+.badges-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.badges-title::before{content:"";width:16px;height:1px;background:var(--gold)}
+.badges-row{display:flex;flex-wrap:wrap;gap:8px}
+.badge{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:99px;padding:5px 11px 5px 8px;background:var(--panel-soft);transition:all .15s}
+.badge.earned{border-color:var(--gold);background:rgba(240,196,106,.1)}
+.badge .b-emo{font-size:1rem;filter:grayscale(1) opacity(.4)}
+.badge.earned .b-emo{filter:none}
+.badge .b-name{font-size:.78rem;color:var(--ink-faint)}
+.badge.earned .b-name{color:var(--gold);font-weight:500}
+</style>
+</head>
+<body>
+<script>if(localStorage.getItem('stjernekikkert_nightmode')==='1')document.body.classList.add('night-mode');</script>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">⭐ Stjernekikkert</a>
+    <a class="nav-link" href="index.html">Himmelen</a>
+    <a class="nav-link active" href="objekter.html">Katalog</a>
+    <a class="nav-link" href="setup.html">Oppsett</a>
+    <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <button class="nav-night" id="night-btn">🔴 Natt</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Hva kan jeg se?</div>
+    <h1>Objekt<em>katalog</em></h1>
+    <p class="lede">Planetene i solsystemet og dypromobjekter innen rekkevidde for en 8″ Dobson fra Norge — med hva du faktisk kan vente å se og hvilket okular som passer.</p>
+  </header>
+
+  <section class="panel">
+    <div id="badges"></div>
+    <div class="filter-row" id="filter-row"></div>
+    <div class="log-count" id="log-count"></div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </section>
+
+  <footer>Forventningene gjelder en 8″ under rimelig mørk himmel · ✦</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div id="finder-modal" class="finder-modal" aria-hidden="true">
+  <div class="fm-bg" id="fm-close-bg"></div>
+  <div class="fm-box" role="dialog" aria-modal="true" aria-labelledby="fm-title">
+    <div class="fm-title" id="fm-title"></div>
+    <div class="fm-chart" id="fm-chart"></div>
+    <div class="fm-hint" id="fm-hint"></div>
+    <div class="fm-note">Stjernekartet er sett mot sør: <b>nord opp, øst til venstre</b>. Gullsiktet er objektet du leter etter. Bruk søkekikkerten til å hoppe fra de navngitte stjernene.</div>
+    <button class="fm-close" id="fm-close-btn">Lukk</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var setup = loadSetup();
+  var tFl = setup.telescope.fl, ap = setup.telescope.ap, barlow = setup.barlow;
+  var owned = getOwnedEyepieces(setup);
+  var TYPE_LABEL = {moon:'Måne', planet:'Planet', cluster:'Stjernehop', globular:'Kulehop', galaxy:'Galakse', nebula:'Tåke', double:'Dobbeltstjerne'};
+  var FILTERS = [
+    {id:'all', label:'Alle'},
+    {id:'sol', label:'Solsystemet'},
+    {id:'cluster', label:'Stjernehoper'},
+    {id:'globular', label:'Kulehoper'},
+    {id:'galaxy', label:'Galakser'},
+    {id:'nebula', label:'Tåker'},
+    {id:'double', label:'Dobbeltstjerner'},
+    {id:'seen', label:'✓ Sett'}
+  ];
+  // Måner (vår Måne + Jupiter/Saturn-måner) som katalogoppføringer
+  var MOON_CAT = MOONS.map(function(m){
+    var parentName = m.parent ? (PLANETS_2026.filter(function(p){return p.id===m.parent;})[0]||{}).name : null;
+    return {id:m.id, emo:m.emo, name:m.name, type:'moon', idealMag:m.idealMag,
+            why:m.why, expect:m.expect, mag:m.mag, season:m.season, parentName:parentName};
+  });
+  // Planetene som katalogoppføringer (posisjon er irrelevant her — beskrivende referanse)
+  var PLANET_CAT = PLANETS_2026.map(function(p){
+    return {id:p.id, emo:p.emo, name:p.name, type:'planet', idealMag:p.idealMag,
+            why:p.why, expect:p.expect, mag:p.mag, diam:p.diam, season:p.season};
+  });
+  var FULL_CATALOG = MOON_CAT.concat(PLANET_CAT).concat(SKY_CATALOG);
+  var active = 'all';
+
+  var fr = document.getElementById('filter-row');
+  fr.innerHTML = FILTERS.map(function(f){ return '<button class="filter-btn'+(f.id==='all'?' active':'')+'" data-f="'+f.id+'">'+f.label+'</button>'; }).join('');
+  fr.addEventListener('click', function(e){
+    var b = e.target.closest('.filter-btn'); if(!b) return;
+    active = b.getAttribute('data-f');
+    fr.querySelectorAll('.filter-btn').forEach(function(x){ x.classList.toggle('active', x===b); });
+    renderGrid();
+  });
+
+  function updateCount(){
+    document.getElementById('log-count').innerHTML = 'Sett <b>'+seenCount()+'</b> av '+FULL_CATALOG.length+' objekter. Trykk «Sett det» når du har observert et objekt.';
+    renderBadges();
+  }
+  function renderBadges(){
+    var badges = computeBadges(FULL_CATALOG), earned = badges.filter(function(b){return b.earned;}).length;
+    document.getElementById('badges').innerHTML =
+      '<div class="badges-wrap"><div class="badges-title">Merker — '+earned+' av '+badges.length+'</div><div class="badges-row">'+
+      badges.map(function(b){
+        return '<span class="badge'+(b.earned?' earned':'')+'" title="'+htmlEscape(b.desc)+'"><span class="b-emo">'+b.emo+'</span><span class="b-name">'+htmlEscape(b.name)+'</span></span>';
+      }).join('')+'</div></div>';
+  }
+
+  function epGuidance(o){
+    if (owned.length){
+      var combo = bestComboFor(o.idealMag, tFl, ap, owned, barlow);
+      if (combo){
+        var bTag = combo.b>1 ? ' + '+combo.b+'× barlow' : '';
+        var line = '<div class="cat-ep">Ditt beste oppsett: <b>'+htmlEscape(combo.ep.name)+bTag+'</b> → <b>'+intc(combo.mag)+'×</b></div>';
+        // FOV/innramming (FIND-2)
+        var fov = trueFovArcmin(combo.ep.afov, combo.mag), fovHtml = '';
+        if (o.type === 'planet'){
+          fovHtml = '<div class="fov-note">Planet — tåler høy forstørrelse i <b>stødig luft</b>; bygg gjerne opp gradvis.</div>';
+        } else if (o.type === 'moon'){
+          fovHtml = o.id==='luna'
+            ? '<div class="fov-note">Månen — start lavt for å se hele, øk så for kratere langs <b>skyggegrensen</b>. Et gråfilter demper blendingen.</div>'
+            : '<div class="fov-note">Måne ved planeten — synlig som en lysprikk. Bruk samme forstørrelse som for planeten selv.</div>';
+        } else if (o.size != null && fov){
+          var v = framingVerdict(o.size, fov);
+          fovHtml = '<div class="fov-note'+(v && v.tight?' tight':'')+'">Synsfelt ≈ <b>'+(fov/60).toFixed(2)+'°</b> — '+(v?v.text:'')+'</div>';
+        } else if (o.sep != null){
+          var ok = combo.mag >= (o.sep < 4 ? 120 : 50);
+          fovHtml = '<div class="fov-note">Separasjon '+o.sep+'″ — '+(ok?'<b>nok til å splitte</b>':'trenger mer forstørrelse')+'</div>';
+        }
+        var buy = '';
+        if (combo.quality==='poor'){
+          var up = bestUpgradeFor(o.idealMag, tFl, setup);
+          if (up) buy = '<div class="cat-buy">💡 Bedre valg: <b>'+htmlEscape(up.model)+'</b>'+(up.price?' · ≈ '+up.price+' NOK':'')+' gir '+intc(tFl/up.fl)+'× — godt tilpasset dette objektet</div>';
+        }
+        return line + fovHtml + buy;
+      }
+    }
+    return '<div class="cat-ep">Sikt mot ≈ <b>'+o.idealMag+'×</b> for dette objektet. <a href="setup.html" style="color:var(--gold)">Registrer okularer</a> for personlige forslag.</div>';
+  }
+
+  function card(o){
+    var seen = isSeen(o.id);
+    var sub = [];
+    if (o.type === 'planet'){
+      if (o.mag != null) sub.push('mag '+o.mag+' (typisk)');
+      if (o.diam) sub.push('Ø ≈ '+o.diam+'″');
+    } else if (o.type === 'moon'){
+      if (o.parentName) sub.push('Måne rundt '+o.parentName);
+      if (o.mag != null) sub.push('mag '+o.mag);
+    } else {
+      if (o.mag != null) sub.push('mag '+o.mag);
+      if (o.size != null) sub.push(o.size+'′ stor');
+      else if (o.sep != null) sub.push('separasjon '+o.sep+'″');
+    }
+    return '<div class="cat-card t-'+o.type+'">'+
+      '<div class="cat-head"><div class="cat-emo">'+o.emo+'</div>'+
+      '<div class="cat-title"><div class="cat-name">'+htmlEscape(o.name)+
+        ' <span class="type-tag '+o.type+'">'+(TYPE_LABEL[o.type]||o.type)+'</span></div>'+
+      '<div class="cat-why">'+htmlEscape(o.why)+'</div>'+
+      (sub.length?'<div class="cat-sub">'+sub.join(' · ')+'</div>':'')+'</div>'+
+      '<span class="cat-season">'+htmlEscape(o.season||'')+'</span></div>'+
+      (o.expect?'<div class="expect"><b>I kikkerten:</b> '+htmlEscape(o.expect)+'</div>':'')+
+      (o.anchor?'<div class="anchor-hint clickable" data-finder="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'"><b>Slik finner du den:</b> '+htmlEscape(o.anchor)+' <span class="tap">▸ vis kart</span></div>':'')+
+      '<div class="cat-foot">'+epGuidance(o)+
+        '<button class="seen-btn'+(seen?' on':'')+'" data-seen="'+o.id+'">'+(seen?'<span class="ck">✓</span> Sett':'+ Sett det')+'</button></div>'+
+      '</div>';
+  }
+
+  function renderGrid(){
+    var list = FULL_CATALOG.filter(function(o){
+      if (active==='all') return true;
+      if (active==='seen') return isSeen(o.id);
+      if (active==='sol') return o.type==='moon' || o.type==='planet';
+      return o.type===active;
+    });
+    var grid = document.getElementById('cat-grid');
+    grid.innerHTML = list.length ? list.map(card).join('') :
+      '<p style="color:var(--ink-faint);font-style:italic;padding:12px 0">Ingen objekter i denne kategorien'+(active==='seen'?' ennå — kom deg ut og se noe! 🔭':'')+'.</p>';
+    updateCount();
+  }
+
+  var toast = document.getElementById('toast'), tt;
+  document.getElementById('cat-grid').addEventListener('click', function(e){
+    var b = e.target.closest('.seen-btn');
+    if (b){
+      var id = b.getAttribute('data-seen'), now = toggleSeen(id);
+      b.classList.toggle('on', now);
+      b.innerHTML = now ? '<span class="ck">✓</span> Sett' : '+ Sett det';
+      updateCount();
+      if (active==='seen' && !now) renderGrid();
+      toast.textContent = now ? 'Lagt til i loggen ✓' : 'Fjernet fra loggen';
+      toast.classList.add('show'); clearTimeout(tt); tt=setTimeout(function(){ toast.classList.remove('show'); }, 1600);
+      return;
+    }
+    var a = e.target.closest('.anchor-hint.clickable');
+    if (a){ openFinderModal(a.getAttribute('data-finder'), parseFloat(a.getAttribute('data-ra')), parseFloat(a.getAttribute('data-dec'))); }
+  });
+
+  // ---- Finnekart-modal (FIND-4) ----
+  var finderModal = document.getElementById('finder-modal'), finderLastFocus = null;
+  function objById(id){ return MOON_CAT.concat(PLANET_CAT).concat(SKY_CATALOG).filter(function(o){return o.id===id;})[0]; }
+  function openFinderModal(id, raH, decDeg){
+    var o = objById(id);
+    document.getElementById('fm-title').innerHTML = (o?o.emo+' '+htmlEscape(o.name):'Finnekart');
+    document.getElementById('fm-chart').innerHTML = buildFinder(id, raH, decDeg, o?o.name:'');
+    document.getElementById('fm-hint').innerHTML = (o&&o.anchor) ? '<b>Slik finner du den:</b> '+htmlEscape(o.anchor) : '';
+    finderLastFocus = document.activeElement;
+    finderModal.classList.add('show'); finderModal.setAttribute('aria-hidden','false');
+    document.getElementById('fm-close-btn').focus();
+  }
+  function closeFinderModal(){
+    finderModal.classList.remove('show'); finderModal.setAttribute('aria-hidden','true');
+    if (finderLastFocus && finderLastFocus.focus) finderLastFocus.focus();
+  }
+  document.getElementById('fm-close-btn').addEventListener('click', closeFinderModal);
+  document.getElementById('fm-close-bg').addEventListener('click', closeFinderModal);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && finderModal.classList.contains('show')) closeFinderModal(); });
+
+  initNightMode();
+  renderGrid();
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+</body>
+</html>

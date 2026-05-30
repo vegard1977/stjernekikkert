@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Himmelen i dag — Stjernekikkert</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%AD%90</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080b18">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+/* ---- Sidespesifikk stil (felles ligger i shared.css) ---- */
+.ring{width:48px;height:48px;margin:0 auto 18px;border-radius:50%;border:1.5px solid var(--gold);position:relative}
+.ring::after{content:"";position:absolute;inset:7px;border-radius:50%;border:1px dashed rgba(240,196,106,.5)}
+.ring::before{content:"";position:absolute;width:7px;height:7px;background:var(--cyan);border-radius:50%;top:-4px;left:50%;transform:translateX(-50%);box-shadow:0 0 10px var(--cyan)}
+
+.setup-banner{background:rgba(240,196,106,.09);border:1px solid rgba(240,196,106,.3);border-radius:12px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:center;gap:14px}
+.setup-banner p{color:var(--ink-soft);font-size:.9rem}
+.setup-banner a{color:var(--gold);font-weight:600;text-decoration:none}
+
+.ctrl-row{display:grid;grid-template-columns:1fr 1fr auto auto auto;gap:10px;align-items:end;margin-bottom:14px}
+label.ctrl-lbl{font-size:.76rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:500;display:block}
+input[type=date],input[type=number]{width:100%;background:var(--panel-soft);color:var(--ink);border:1px solid var(--line-strong);border-radius:10px;padding:10px 12px;font-family:'Outfit',sans-serif;font-size:.95rem;transition:border-color .15s}
+input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,196,106,.14)}
+.ctrl-btn{background:var(--panel-soft);color:var(--ink-soft);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.85rem;white-space:nowrap;transition:all .15s}
+.ctrl-btn:hover{border-color:var(--gold);color:var(--gold)}
+.ctrl-loc{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-faint);margin-top:5px}
+.live-row{margin-top:10px}
+@keyframes blink-live{0%,100%{opacity:1}50%{opacity:.45}}
+.live-btn{width:100%;padding:12px 18px;border-radius:10px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:600;border:2px solid var(--cyan);color:var(--cyan);background:rgba(111,216,224,.08);display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s}
+.live-btn:hover{background:rgba(111,216,224,.16)}
+.live-btn.live-active{border-color:var(--rust);color:var(--rust);background:rgba(232,131,90,.12);animation:blink-live 2s ease-in-out infinite}
+.live-btn .live-dot{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.time-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.time-inp{width:90px;background:var(--panel-soft);color:var(--ink);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;font-family:'Outfit',sans-serif;font-size:.9rem}
+.time-inp:focus{outline:none;border-color:var(--gold)}
+.time-badge{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--ink-faint);background:rgba(111,216,224,.08);border:1px solid rgba(111,216,224,.2);border-radius:6px;padding:4px 10px}
+.time-badge.active{color:var(--cyan);border-color:rgba(111,216,224,.4);background:rgba(111,216,224,.13)}
+
+/* Kveldens beste (FIND-3) */
+.best-box{background:linear-gradient(150deg,rgba(111,216,224,.10),rgba(240,196,106,.06));border:1px solid rgba(111,216,224,.30);border-radius:14px;padding:16px 18px;margin-bottom:22px}
+.best-box .bt{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.best-item{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.best-item:last-child{border-bottom:none}
+.best-item .emo{font-size:1.2rem;flex:none}
+.best-item .nm{font-family:'Fraunces',serif;font-weight:600;color:var(--ink)}
+.best-item .rs{font-size:.8rem;color:var(--ink-soft);margin-left:auto;text-align:right}
+.best-item .rs b{color:var(--cyan);font-family:'JetBrains Mono',monospace}
+
+/* Logg-teller */
+.log-count{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint);text-align:center;margin-bottom:14px}
+.log-count b{color:var(--green)}
+
+.sun-status{background:var(--panel-soft);border:1px solid var(--line);border-radius:10px;padding:11px 16px;margin-bottom:18px;font-size:.88rem;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.sun-status .ico{font-size:1.25rem;flex:none}
+.sun-status.day{background:rgba(240,196,106,.10);border-color:rgba(240,196,106,.32)}
+.sun-status.twilight{background:rgba(232,131,90,.08);border-color:rgba(232,131,90,.28)}
+.sun-status.dark{background:rgba(111,216,224,.06);border-color:rgba(111,216,224,.22)}
+.sun-status .det{color:var(--ink-soft);flex:1}
+.sun-status .det b{color:var(--ink)}
+.moon-chip{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-soft);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:99px;padding:4px 10px;white-space:nowrap}
+.moon-warn{border:1px solid rgba(240,196,106,.4);background:rgba(240,196,106,.08);border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:.84rem;color:var(--ink-soft);display:flex;gap:10px;align-items:center}
+
+.sky-section{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);margin:20px 0 10px;display:flex;align-items:center;gap:10px}
+.sky-section::after{content:"";flex:1;height:1px;background:var(--line)}
+.sky-section:first-child{margin-top:0}
+
+/* Sammenleggbare seksjoner */
+.sky-sec{margin-bottom:14px}
+.sky-sec-head{width:100%;display:flex;align-items:center;gap:10px;padding:8px 0 10px;background:none;border:none;border-bottom:1px solid var(--line);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);transition:color .15s}
+.sky-sec-head:hover{color:var(--ink-soft)}
+.sky-sec-head:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.sky-sec-title{color:var(--gold);display:flex;align-items:center;gap:8px}
+.sky-sec-title::before{content:"";width:16px;height:1px;background:var(--gold);display:inline-block}
+.sky-sec-count{background:rgba(160,176,230,.12);color:var(--ink-soft);border-radius:99px;padding:1px 8px;font-size:9px}
+.sky-sec-arrow{margin-left:auto;transition:transform .2s;font-size:.85rem}
+.sky-sec.open .sky-sec-arrow{transform:rotate(90deg)}
+.sky-sec-body{display:none;padding-top:12px}
+.sky-sec.open .sky-sec-body{display:block}
+
+.obj-card{background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;padding:0;margin-bottom:10px;overflow:hidden;position:relative}
+.obj-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan)}
+.obj-card.dim::before{background:var(--ink-faint)}
+.obj-card.high::before{background:var(--gold)}
+.obj-card.outside-window{opacity:.4}
+.obj-main{display:grid;grid-template-columns:auto 1fr auto;gap:12px 14px;padding:14px 16px;align-items:start}
+.obj-emo{font-size:1.6rem;line-height:1;padding-top:2px}
+.obj-body{min-width:0}
+.obj-name{font-family:'Fraunces',serif;font-size:1.02rem;font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;line-height:1.25}
+.obj-why{font-size:.82rem;color:var(--ink-soft);margin-top:3px}
+.obj-sub{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-faint);margin-top:4px}
+.obj-actions{margin-top:8px}
+.obj-alt{text-align:right;flex:none;min-width:80px}
+.obj-alt .deg{font-family:'JetBrains Mono',monospace;font-size:1.35rem;font-weight:700;color:var(--ink);line-height:1}
+.obj-alt .dir-simple{font-size:.74rem;color:var(--ink-faint);margin-top:1px}
+.obj-alt .below{font-size:.78rem;color:var(--ink-faint);font-family:'JetBrains Mono',monospace}
+.dir-compass{font-size:.78rem;color:var(--cyan);font-family:'JetBrains Mono',monospace;margin-top:3px;white-space:nowrap;background:none;border:none;border-bottom:1px dashed rgba(111,216,224,.4);padding:0 0 1px;cursor:pointer}
+.dir-compass:hover{color:var(--gold)}
+.dir-compass:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+.obj-window{border-top:1px dashed var(--line);padding:9px 16px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:.81rem}
+.obj-window .times{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--ink-soft)}
+.obj-window .times .t{color:var(--ink);font-weight:500}
+.obj-window .times .lbl{font-size:.68rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em}
+.obj-window .circum{color:var(--cyan);font-family:'JetBrains Mono',monospace}
+.obj-window .never{color:var(--ink-faint);font-style:italic}
+.obj-window .peak{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-faint);text-align:right}
+.obj-window .peak b{color:var(--cyan)}
+
+.obj-ep{border-top:1px dashed var(--line);padding:10px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center}
+.obj-ep-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-faint);text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.obj-ep-label::before{content:"▸";color:var(--cyan)}
+.obj-ep-name{font-family:'Fraunces',serif;font-size:.98rem;font-weight:600;color:var(--ink);line-height:1.2}
+.obj-ep-name .b-tag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;background:rgba(240,196,106,.18);color:var(--gold);padding:2px 6px;border-radius:99px;margin-left:5px;text-transform:uppercase;font-weight:500}
+.obj-ep-mag{text-align:right;font-family:'JetBrains Mono',monospace}
+.obj-ep-mag .mg{font-size:1.2rem;font-weight:700;line-height:1}
+.obj-ep-mag .mg.good{color:var(--green)}.obj-ep-mag .mg.fair{color:var(--gold)}.obj-ep-mag .mg.poor{color:var(--rust)}
+.obj-ep-mag .q{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin-top:2px}
+.obj-upgrade{grid-column:1/-1;display:flex;align-items:center;gap:8px;background:rgba(240,196,106,.07);border-radius:7px;padding:7px 10px;margin-top:2px;font-size:.8rem;color:var(--ink-soft)}
+.obj-upgrade a{color:var(--gold);font-weight:600;text-decoration:none}
+.fov-line{grid-column:1/-1;margin-top:2px}
+
+/* Alle-okularer dropdown (topp 3) */
+.ae{border-top:1px dashed var(--line)}
+.ae-head{width:100%;background:none;border:none;text-align:left;cursor:pointer;padding:9px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);transition:color .15s}
+.ae-head:hover{color:var(--cyan)}
+.ae-head:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+.ae-head .ae-title{transition:color .15s}
+.ae.open .ae-head .ae-title{color:var(--cyan)}
+.ae-body{display:none;padding:2px 16px 12px}
+.ae.open .ae-body{display:block}
+.ae-row{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.84rem}
+.ae-row:last-of-type{border-bottom:none}
+.ae-q{font-family:'JetBrains Mono',monospace;flex:none;width:14px;text-align:center}
+.ae-q.good{color:var(--green)}.ae-q.fair{color:var(--gold)}.ae-q.poor{color:var(--rust)}
+.ae-name{flex:1;color:var(--ink);min-width:0}
+.ae-mag{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-weight:700;flex:none}
+.ae-own{font-family:'JetBrains Mono',monospace;font-size:.66rem;background:rgba(138,217,156,.15);color:var(--green);padding:1px 7px;border-radius:99px;flex:none}
+.ae-price{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);flex:none}
+.ae-note{font-size:.74rem;color:var(--ink-faint);margin-top:8px;line-height:1.4}
+
+.sky-empty{color:var(--ink-faint);font-size:.9rem;padding:12px 0;font-style:italic}
+
+.sun-warn{border:1px solid rgba(232,131,90,.5);background:linear-gradient(180deg,rgba(232,131,90,.13),rgba(232,131,90,.04));border-radius:14px;padding:18px 20px;margin-bottom:22px;display:flex;gap:14px;align-items:flex-start}
+.sun-warn .ico{font-size:1.5rem;flex:none}
+.sun-warn h3{font-family:'Fraunces',serif;font-size:1.05rem;color:var(--rust);margin-bottom:4px}
+.sun-warn p{font-size:.88rem;color:var(--ink-soft)}
+
+/* Kompass-modal */
+#compass-modal{display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center}
+#compass-modal.show{display:flex}
+.cm-bg{position:absolute;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px)}
+.cm-box{position:relative;z-index:1;background:var(--panel);border:1px solid var(--line-strong);border-radius:20px;padding:22px 20px 18px;max-width:340px;width:92%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.8)}
+.cm-objname{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;color:var(--ink);margin-bottom:3px}
+.cm-bearing{font-family:'JetBrains Mono',monospace;font-size:1.5rem;color:var(--cyan);margin-bottom:14px;letter-spacing:.04em}
+.cm-steps{text-align:left;margin:14px 0;display:flex;flex-direction:column;gap:9px}
+.cm-step{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;color:var(--ink-soft);line-height:1.4}
+.cm-stepnum{background:var(--gold);color:var(--bg);width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.72rem;flex:none;margin-top:1px}
+.cm-close-btn{background:none;border:1px solid var(--line-strong);color:var(--ink-faint);padding:8px 22px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.88rem;margin-top:4px;transition:all .15s}
+.cm-close-btn:hover{border-color:var(--rust);color:var(--rust)}
+
+/* Klikkbar maks-elevasjon */
+.peak-link{background:none;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-faint);text-align:right;padding:0;border-bottom:1px dashed rgba(160,176,230,.35);transition:color .15s}
+.peak-link:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
+.peak-link:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.peak-link b{color:var(--cyan)}
+
+/* Høydekurve-modal */
+#elev-modal{display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center}
+#elev-modal.show{display:flex}
+.em-bg{position:absolute;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px)}
+.em-box{position:relative;z-index:1;background:var(--panel);border:1px solid var(--line-strong);border-radius:20px;padding:20px 18px 16px;max-width:420px;width:94%;box-shadow:0 32px 80px rgba(0,0,0,.8)}
+.em-title{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;color:var(--ink);margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.em-readout{font-family:'JetBrains Mono',monospace;font-size:.86rem;color:var(--cyan);min-height:1.3em;margin-bottom:8px}
+.em-readout .muted{color:var(--ink-faint)}
+#em-chart{margin:2px 0 8px}
+#em-chart svg{width:100%;height:auto;display:block}
+.em-hit{fill:transparent;cursor:crosshair;touch-action:none}
+.em-axis{stroke:var(--line);stroke-width:1}
+.em-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4;opacity:.6}
+.em-midnight{stroke:var(--ink-faint);stroke-width:1;stroke-dasharray:2 3;opacity:.8}
+.em-midlbl{fill:var(--ink-soft);font-weight:700}
+.em-thr{stroke:var(--gold-deep);stroke-width:1;stroke-dasharray:4 3;opacity:.7}
+.em-curve{fill:none;stroke:var(--cyan);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.em-fill{fill:var(--cyan);opacity:.10}
+.em-axislbl{fill:var(--ink-faint);font-family:'JetBrains Mono',monospace;font-size:8px}
+.em-cursor{stroke:var(--rust);stroke-width:1}
+.em-dot{fill:var(--rust)}
+.em-peak{fill:var(--gold)}
+.em-peaklbl{fill:var(--gold);font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:700}
+.em-legend{font-size:.74rem;color:var(--ink-faint);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.em-legend b{color:var(--ink-soft);font-weight:500}
+
+/* Mørke-tidslinje (TIME-1) */
+.dtl{background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.dtl-head{width:100%;display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;background:none;border:none;text-align:left;font-family:'Outfit',sans-serif;color:var(--ink)}
+.dtl-head:hover{background:rgba(255,255,255,.02)}
+.dtl-head:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.dtl-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.dtl-title::before{content:"";width:16px;height:1px;background:var(--gold);display:inline-block}
+.dtl-collapsed-sum{flex:1;font-size:.78rem;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dtl.open .dtl-collapsed-sum{display:none}
+.dtl-arrow{margin-left:auto;color:var(--ink-faint);font-size:.85rem;transition:transform .2s;flex:none}
+.dtl.open .dtl-arrow{transform:rotate(90deg)}
+.dtl-body{display:none;padding:0 16px 12px}
+.dtl.open .dtl-body{display:block}
+.dtl svg{width:100%;height:auto;display:block}
+.dtl-lbl{fill:var(--ink-faint);font-family:'JetBrains Mono',monospace;font-size:8px}
+.dtl-now{stroke:var(--rust);stroke-width:1.5}
+.dtl-cursor{stroke:var(--ink);stroke-width:1;opacity:.7}
+.dtl-hit{fill:transparent;cursor:crosshair;touch-action:none}
+.dtl-readout{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--cyan);min-height:1.3em;margin:2px 0 6px}
+.dtl-readout .muted{color:var(--ink-faint)}
+.dtl-readout b{color:var(--ink)}
+.dtl-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;font-size:.72rem;color:var(--ink-faint)}
+.dtl-legend span{display:flex;align-items:center;gap:5px}
+.dtl-key{width:12px;height:10px;border-radius:2px;flex:none;display:inline-block}
+.dtl-summary{font-size:.82rem;color:var(--ink-soft);margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.dtl-summary b{color:var(--cyan)}
+.dtl-summary .warn{color:var(--gold)}
+
+/* Vær / skydekke (COND-1) */
+.wx{background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.wx-head{width:100%;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:none;border:none;text-align:left;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--ink)}
+.wx-head:hover{background:rgba(255,255,255,.02)}
+.wx-head:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.wx-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.wx-title::before{content:"";width:16px;height:1px;background:var(--gold);display:inline-block}
+.wx-now{font-size:.9rem;color:var(--ink)}
+.wx-now b{color:var(--cyan)}
+.wx-arrow{margin-left:auto;color:var(--ink-faint);font-size:.85rem;transition:transform .2s;flex:none}
+.wx.open .wx-arrow{transform:rotate(90deg)}
+.wx-body{display:none;padding:0 16px 12px}
+.wx.open .wx-body{display:block}
+.wx-yr{font-size:.8rem;color:var(--gold);text-decoration:none;white-space:nowrap;border:1px solid rgba(240,196,106,.35);border-radius:99px;padding:4px 11px;transition:all .15s;display:inline-block;margin-bottom:4px}
+.wx-yr:hover{background:rgba(240,196,106,.12)}
+.wx-readout{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--cyan);min-height:1.3em;margin:6px 0 2px}
+.wx-readout .muted{color:var(--ink-faint)}
+.wx-readout b{color:var(--ink)}
+.wx-bars{display:flex;gap:2px;margin-top:6px;align-items:flex-end;height:50px;touch-action:none}
+.wx-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;cursor:crosshair}
+.wx-bar .col{width:100%;border-radius:2px 2px 0 0;background:var(--cyan);opacity:.8;transition:opacity .1s}
+.wx-bar.hot .col{opacity:1;outline:1px solid #fff}
+.wx-bar .hr{font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--ink-faint)}
+.wx-note{font-size:.76rem;color:var(--ink-faint);margin-top:9px;line-height:1.4}
+.wx-loading{font-size:.84rem;color:var(--ink-faint);font-style:italic}
+.wx-fail{font-size:.82rem;color:var(--ink-soft)}
+.wx-fail a{color:var(--gold);text-decoration:none}
+
+/* Himmelbegivenheter (TIME-3) */
+.evt{background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.evt-head{width:100%;display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;background:none;border:none;text-align:left;font-family:'Outfit',sans-serif;color:var(--ink)}
+.evt-head:hover{background:rgba(255,255,255,.02)}
+.evt-head:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.evt-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.evt-title::before{content:"";width:16px;height:1px;background:var(--gold);display:inline-block}
+.evt-next{flex:1;font-size:.78rem;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evt.open .evt-next{display:none}
+.evt-arrow{margin-left:auto;color:var(--ink-faint);font-size:.85rem;transition:transform .2s;flex:none}
+.evt.open .evt-arrow{transform:rotate(90deg)}
+.evt-body{display:none;padding:0 16px 12px}
+.evt.open .evt-body{display:block}
+.evt-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line)}
+.evt-item:last-child{border-bottom:none}
+.evt-emo{font-size:1.4rem;flex:none;line-height:1.2}
+.evt-when{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--gold);text-transform:uppercase;letter-spacing:.04em}
+.evt-name{font-family:'Fraunces',serif;font-weight:600;color:var(--ink);font-size:1rem;margin:1px 0 3px}
+.evt-desc{font-size:.84rem;color:var(--ink-soft);line-height:1.45}
+.evt-src{font-size:.76rem;color:var(--ink-faint);margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.evt-src a{color:var(--gold);text-decoration:none}
+
+@media(max-width:680px){
+  .ctrl-row{grid-template-columns:1fr 1fr}
+  .ctrl-row > button{grid-column:span 1}
+}
+</style>
+</head>
+<body>
+<script>if(localStorage.getItem('stjernekikkert_nightmode')==='1')document.body.classList.add('night-mode');</script>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">⭐ Stjernekikkert</a>
+    <a class="nav-link active" href="index.html">Himmelen</a>
+    <a class="nav-link" href="objekter.html">Katalog</a>
+    <a class="nav-link" href="setup.html">Oppsett</a>
+    <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <button class="nav-night" id="night-btn" title="Nattmodus – rødt lys bevarer mørketilpasning">🔴 Natt</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header>
+    <div class="ring"></div>
+    <div class="eyebrow">Sky-Watcher Dobson · 8&Prime;</div>
+    <h1>Himmelen <em>i dag</em></h1>
+    <p class="lede">Objekter med opp- og ned-tider basert på din posisjon. Oppdateres når du bytter dato.</p>
+  </header>
+
+  <div id="setup-banner"></div>
+
+  <section class="panel">
+    <div class="ctrl-row">
+      <div>
+        <label class="ctrl-lbl" for="obs-date">Dato — endre for planlegging</label>
+        <input type="date" id="obs-date">
+      </div>
+      <div>
+        <label class="ctrl-lbl">Posisjon</label>
+        <div style="display:flex;gap:8px">
+          <input type="number" id="lat-inp" step="0.01" min="-90" max="90" inputmode="decimal" style="width:50%" placeholder="Bredde">
+          <input type="number" id="lon-inp" step="0.01" min="-180" max="180" inputmode="decimal" style="width:50%" placeholder="Lengde">
+        </div>
+      </div>
+      <button class="ctrl-btn" id="home-btn" title="Gå til hjemsted">🏠 Hjemme</button>
+      <button class="ctrl-btn" id="geo-btn">📍 GPS</button>
+      <button class="ctrl-btn" id="today-btn">I dag</button>
+    </div>
+    <div class="ctrl-loc" id="loc-label"></div>
+    <div class="live-row">
+      <button class="live-btn" id="live-btn" title="Oppdateres hvert 30 sek">
+        <span class="live-dot"></span><span id="live-btn-txt">📡&nbsp; Vis aktuell posisjon NÅ</span>
+      </button>
+    </div>
+    <div class="time-row">
+      <label class="ctrl-lbl" style="margin-bottom:0">Vis synlige mellom</label>
+      <input type="time" id="time-from" class="time-inp" value="21:00">
+      <span style="color:var(--ink-faint)">–</span>
+      <input type="time" id="time-to" class="time-inp" value="01:00">
+      <span class="time-badge" id="time-badge">Alle tider</span>
+    </div>
+  </section>
+
+  <div id="best-box"></div>
+  <div id="sun-status"></div>
+  <div id="darkness-timeline"></div>
+  <div id="weather-box"></div>
+  <div id="events-box"></div>
+  <div id="moon-warn"></div>
+  <div class="log-count" id="log-count"></div>
+
+  <section class="panel">
+    <div id="obj-list"><p class="sky-empty">Laster …</p></div>
+  </section>
+
+  <div class="sun-warn">
+    <div class="ico">☀︎</div>
+    <div>
+      <h3>Aldri se på solen gjennom kikkerten</h3>
+      <p>Det gir varig øyeskade på et øyeblikk. Bruk kun godkjent solfilter foran åpningen. La aldri barnet bruke kikkerten på dagtid uten en voksen til stede.</p>
+    </div>
+  </div>
+
+  <footer>Koordinater J2000 · opp/ned-tider gjelder over 15° høyde · God stjernekikking ✦</footer>
+</div>
+
+<div id="finder-modal" class="finder-modal" aria-hidden="true">
+  <div class="fm-bg" id="fm-close-bg"></div>
+  <div class="fm-box" role="dialog" aria-modal="true" aria-labelledby="fm-title">
+    <div class="fm-title" id="fm-title"></div>
+    <div class="fm-chart" id="fm-chart"></div>
+    <div class="fm-hint" id="fm-hint"></div>
+    <div class="fm-note">Stjernekartet er sett mot sør: <b>nord opp, øst til venstre</b>. Gullsiktet er objektet du leter etter. Bruk søkekikkerten til å hoppe fra de navngitte stjernene.</div>
+    <button class="fm-close" id="fm-close-btn">Lukk</button>
+  </div>
+</div>
+
+<div id="elev-modal" aria-hidden="true">
+  <div class="em-bg" id="em-close-bg"></div>
+  <div class="em-box" role="dialog" aria-modal="true" aria-labelledby="em-title">
+    <div class="em-title" id="em-title"></div>
+    <div class="em-readout" id="em-readout"></div>
+    <div id="em-chart"></div>
+    <div class="em-legend"><span>Høyde over horisonten gjennom døgnet</span> <span><b>– – –</b> 15°-grensen</span></div>
+    <button class="cm-close-btn" id="em-close-btn">Lukk</button>
+  </div>
+</div>
+
+<div id="compass-modal" aria-hidden="true">
+  <div class="cm-bg" id="cm-close-bg"></div>
+  <div class="cm-box" role="dialog" aria-modal="true" aria-labelledby="cm-objname">
+    <div class="cm-objname" id="cm-objname"></div>
+    <div class="cm-bearing" id="cm-bearing"></div>
+    <div id="cm-svg"></div>
+    <div class="cm-steps">
+      <div class="cm-step"><span class="cm-stepnum">1</span><span>Drei ringen til <b id="cm-step-deg" style="color:var(--gold)"></b>° peker mot reisepilen <span style="color:#f55">▲</span></span></div>
+      <div class="cm-step"><span class="cm-stepnum">2</span><span>Hold kompasset flatt, sving deg til den <b style="color:#f55">røde nålen</b> peker mot N i ringen</span></div>
+      <div class="cm-step"><span class="cm-stepnum">3</span><span>Gå i retningen reisepilen <span style="color:#f55">▲</span> peker — løft blikket og finn et landemerke</span></div>
+    </div>
+    <button class="cm-close-btn" id="cm-close-btn">Lukk</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var setup = loadSetup();
+  var lat = setup.location.lat, lon = setup.location.lon;
+  var TYPE_LABEL = {cluster:'Stjernehop', globular:'Kulehop', galaxy:'Galakse', nebula:'Tåke', double:'Dobbeltstjerne', planet:'Planet', moon:'Månen'};
+
+  var dateInp = document.getElementById('obs-date');
+  dateInp.value = todayISO();
+  var timeFrom = document.getElementById('time-from'), timeTo = document.getElementById('time-to');
+  var timeBadge = document.getElementById('time-badge');
+  var latInp = document.getElementById('lat-inp'), lonInp = document.getElementById('lon-inp');
+  latInp.value = lat; lonInp.value = lon;
+
+  // Debounce (PERF-1)
+  var rt; function scheduleRender(){ clearTimeout(rt); rt = setTimeout(render, 280); }
+  dateInp.addEventListener('change', render);
+  timeFrom.addEventListener('change', render);
+  timeTo.addEventListener('change', render);
+  latInp.addEventListener('input', function(){ var v=parseFloat(this.value); if(isFinite(v)) lat=v; scheduleRender(); });
+  lonInp.addEventListener('input', function(){ var v=parseFloat(this.value); if(isFinite(v)) lon=v; scheduleRender(); });
+
+  function hm2min(s){ var p=(s||'').split(':'); return (parseInt(p[0],10)||0)*60 + (parseInt(p[1],10)||0); }
+
+  // BUG-3: vilkårlig lang vindusperiode, respekterer minutter, håndterer midnatt
+  function inTimeWindow(rs, dateStr){
+    if (rs.neverAbove) return false;
+    if (rs.alwaysAbove) return true;
+    var from = hm2min(timeFrom.value), to = hm2min(timeTo.value);
+    if (to <= from) to += 1440;
+    var base = new Date(dateStr + 'T00:00:00');
+    for (var m = from; m <= to; m += 30){
+      var t = new Date(base.getTime() + m*60000);
+      if (altAz(rs.ra, rs.dec, t, lat, lon).alt >= 15) return true;
+    }
+    return false;
+  }
+
+  function setLocation(a,b){ lat=a; lon=b; latInp.value=a; lonInp.value=b; render(); }
+  document.getElementById('today-btn').addEventListener('click', function(){ dateInp.value=todayISO(); render(); });
+  document.getElementById('geo-btn').addEventListener('click', function(){
+    if(!navigator.geolocation){ alert('Geolokasjon støttes ikke.'); return; }
+    navigator.geolocation.getCurrentPosition(function(p){ setLocation(+p.coords.latitude.toFixed(4), +p.coords.longitude.toFixed(4)); },
+      function(){ alert('Kunne ikke hente posisjon.'); });
+  });
+  document.getElementById('home-btn').addEventListener('click', function(){
+    if(setup.home && setup.home.lat) setLocation(setup.home.lat, setup.home.lon);
+    else alert('Ingen hjemposisjon er lagret. Gå til Oppsett og lagre hjemstedet ditt.');
+  });
+
+  function checkSetupBanner(){
+    var b = document.getElementById('setup-banner');
+    b.innerHTML = getOwnedEyepieces(setup).length ? '' :
+      '<div class="setup-banner"><span style="font-size:1.4rem">🔭</span><p>Du har ikke registrert noen okularer ennå. <a href="setup.html">Gå til Oppsett</a> for å huke av okularene dine — da får hvert objekt en okular-anbefaling.</p></div>';
+  }
+
+  function renderSunStatus(date, moonInfo){
+    var s = sunPos(date), alt = altAz(s.ra, s.dec, date, lat, lon).alt, cls, ico, txt;
+    if (alt > 0){ cls='day'; ico='☀'; txt='<b>Sola er oppe</b> ('+intc(alt)+'°). Vent til skumring for stjernekikking.'; }
+    else if (alt > -6){ cls='twilight'; ico='🌅'; txt='<b>Borgerlig skumring</b>. Bare månen og de lyseste planetene er synlige.'; }
+    else if (alt > -12){ cls='twilight'; ico='🌆'; txt='<b>Nautisk skumring</b>. Planeter og lyse stjerner synlige.'; }
+    else if (alt > -18){ cls='twilight'; ico='🌃'; txt='<b>Astronomisk skumring</b>. Mye er synlig, svakeste galakser trenger mørkere.'; }
+    else { cls='dark'; ico='🌌'; txt='<b>Full mørke</b>. Beste forhold for dypromobjekter.'; }
+    var mon = date.getMonth();
+    if (lat > 55 && mon >= 4 && mon <= 7 && alt > -12)  // BUG-4: mai–august
+      txt += ' <span style="color:var(--ink-faint)">— hvite netter i Norge (mai–august): full mørke er ikke tilgjengelig.</span>';
+    var dStr = date.toLocaleDateString('no-NO',{weekday:'long', day:'numeric', month:'long'});
+    var moonChip = '<span class="moon-chip">'+moonInfo.phase.emoji+' '+moonInfo.phase.name+' · '+moonInfo.phase.illum+'%</span>';
+    var el = document.getElementById('sun-status');
+    el.className = 'sun-status '+cls;
+    el.innerHTML = '<span class="ico">'+ico+'</span><div class="det">'+txt+'</div>'+moonChip+
+      '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--ink-faint)">'+dStr+'</span>';
+  }
+
+  // ---- Mørke-tidslinje (TIME-1) ----
+  // Midnatt-sentrert stripe (middag→middag) med skumringsfaser + måne-oppe-bånd.
+  // Sammenleggbar (dropdown) + skrubbing med avlesning.
+  var dtlOpen = (localStorage.getItem('stjernekikkert_dtl_open') !== '0'); // default åpen
+  var dtlState = null; // {base, sunAlts, moonUp, geom}
+  function darknessPhase(sa){
+    if (sa > 0)   return {c:'#2a3566', name:'Dag'};
+    if (sa > -6)  return {c:'#3a3a72', name:'Borgerlig skumring'};
+    if (sa > -12) return {c:'#262a5e', name:'Nautisk skumring'};
+    if (sa > -18) return {c:'#171a44', name:'Astronomisk skumring'};
+    return {c:'#0c0e26', name:'Full mørke'};
+  }
+
+  function renderDarknessTimeline(dateStr, nowDate){
+    var box = document.getElementById('darkness-timeline');
+    var base = new Date(dateStr + 'T12:00:00');  // middag valgt dag → 12:00 neste dag
+    var W=340, H=64, L=8, R=332, T=18, BAND_H=20, MOON_Y=44, MOON_H=8;
+    function xMin(m){ return L + (m/1440)*(R-L); }
+
+    // Sol-høyde og måne-oppe i 6-min steg
+    var N=240, sunAlts=[], moonUp=[];
+    for (var i=0; i<=N; i++){
+      var t = new Date(base.getTime() + (i*6)*60000);
+      sunAlts.push(altAz(sunPos(t).ra, sunPos(t).dec, t, lat, lon).alt);
+      var mp = moonPos(t);
+      moonUp.push(altAz(mp.ra, mp.dec, t, lat, lon).alt >= 0);
+    }
+    dtlState = {base:base, sunAlts:sunAlts, moonUp:moonUp, geom:{W:W,H:H,L:L,R:R,T:T,BAND_H:BAND_H,MOON_Y:MOON_Y,MOON_H:MOON_H}};
+
+    var segs = '';
+    for (var j=0; j<N; j++){
+      segs += '<rect x="'+xMin(j*6).toFixed(1)+'" y="'+T+'" width="'+(xMin((j+1)*6)-xMin(j*6)+0.6).toFixed(1)+'" height="'+BAND_H+'" fill="'+darknessPhase(sunAlts[j]).c+'"/>';
+    }
+    var moonSegs = '';
+    for (var k=0; k<N; k++){
+      if (moonUp[k]) moonSegs += '<rect x="'+xMin(k*6).toFixed(1)+'" y="'+MOON_Y+'" width="'+(xMin((k+1)*6)-xMin(k*6)+0.6).toFixed(1)+'" height="'+MOON_H+'" fill="var(--gold-deep)" opacity="0.75"/>';
+    }
+    var xt='';
+    [{m:0,l:'12'},{m:360,l:'18'},{m:720,l:'00'},{m:1080,l:'06'},{m:1440,l:'12'}].forEach(function(tk){
+      var px=xMin(tk.m).toFixed(1), midn=tk.m===720;
+      xt += '<line x1="'+px+'" y1="'+T+'" x2="'+px+'" y2="'+(T+BAND_H)+'" stroke="'+(midn?'rgba(255,255,255,.4)':'rgba(255,255,255,.15)')+'" stroke-width="'+(midn?1:0.7)+'"/>'+
+            '<text class="dtl-lbl" x="'+px+'" y="'+(T+BAND_H+10)+'" text-anchor="middle"'+(midn?' style="fill:var(--ink-soft);font-weight:700"':'')+'>'+tk.l+'</text>';
+    });
+    var nowMark='';
+    var nowMin = (nowDate - base)/60000;
+    if (nowMin >= 0 && nowMin <= 1440){
+      var nx = xMin(nowMin).toFixed(1);
+      nowMark = '<line class="dtl-now" x1="'+nx+'" y1="'+(T-4)+'" x2="'+nx+'" y2="'+(MOON_Y+MOON_H+2)+'"/>'+
+                '<polygon points="'+nx+','+(T-6)+' '+(+nx-3)+','+(T-10)+' '+(+nx+3)+','+(T-10)+'" fill="var(--rust)"/>';
+    }
+    var moonLbl = '<text class="dtl-lbl" x="'+L+'" y="'+(MOON_Y+MOON_H-1)+'" style="fill:var(--gold-deep)">🌙 oppe</text>';
+    var cursor = '<line class="dtl-cursor" id="dtl-cursor" x1="0" y1="'+(T-4)+'" x2="0" y2="'+(MOON_Y+MOON_H+2)+'" style="display:none"/>';
+    var hit = '<rect class="dtl-hit" id="dtl-hit" x="'+L+'" y="'+(T-4)+'" width="'+(R-L)+'" height="'+(MOON_Y+MOON_H+2-(T-4))+'"/>';
+
+    var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+segs+moonSegs+xt+nowMark+moonLbl+cursor+hit+'</svg>';
+
+    // Tekstoppsummering
+    var darkestSa = Math.min.apply(null, sunAlts);
+    var summary;
+    if (darkestSa > -6){
+      summary = '<span class="warn">Hvite netter</span> — sola synker aldri under −6° i natt. Bare Månen, planeter og de lyseste objektene er synlige.';
+    } else {
+      var nautIdx=-1, astrIdx=-1;
+      for (var p=0;p<sunAlts.length;p++){ if(nautIdx<0 && sunAlts[p]<=-12) nautIdx=p; if(astrIdx<0 && sunAlts[p]<=-18) astrIdx=p; }
+      var tNaut = nautIdx>=0 ? fmtTime(new Date(base.getTime()+nautIdx*6*60000)) : null;
+      if (astrIdx>=0){
+        var tAstr = fmtTime(new Date(base.getTime()+astrIdx*6*60000));
+        summary = 'Full mørke (sol under −18°) fra ca. <b>'+tAstr+'</b>'+(tNaut?' (skikkelig mørkt fra '+tNaut+')':'')+'.';
+      } else if (tNaut){
+        summary = 'Nautisk mørke fra ca. <b>'+tNaut+'</b> — astronomisk full mørke nås ikke i natt.';
+      } else { summary = 'Det blir aldri helt mørkt i natt.'; }
+    }
+
+    var body = svg +
+      '<div class="dtl-readout" id="dtl-readout"><span class="muted">Dra over stripen for å lese av tidspunkt</span></div>'+
+      '<div class="dtl-legend">'+
+        '<span><i class="dtl-key" style="background:#2a3566"></i>Dag/skumring</span>'+
+        '<span><i class="dtl-key" style="background:#171a44"></i>Astronomisk</span>'+
+        '<span><i class="dtl-key" style="background:#0c0e26;border:1px solid var(--line)"></i>Full mørke</span>'+
+        '<span><i class="dtl-key" style="background:var(--gold-deep)"></i>Måne oppe</span>'+
+      '</div><div class="dtl-summary">'+summary+'</div>';
+
+    box.innerHTML = '<div class="dtl'+(dtlOpen?' open':'')+'">'+
+      '<button class="dtl-head" id="dtl-toggle" aria-expanded="'+(dtlOpen?'true':'false')+'">'+
+        '<span class="dtl-title">Mørket i natt</span>'+
+        '<span class="dtl-collapsed-sum" id="dtl-collapsed-sum">'+summary.replace(/<[^>]+>/g,'')+'</span>'+
+        '<span class="dtl-arrow">▸</span>'+
+      '</button>'+
+      '<div class="dtl-body">'+body+'</div></div>';
+
+    // Toggle (dropdown on/off)
+    document.getElementById('dtl-toggle').addEventListener('click', function(){
+      dtlOpen = !dtlOpen;
+      document.querySelector('.dtl').classList.toggle('open', dtlOpen);
+      this.setAttribute('aria-expanded', dtlOpen?'true':'false');
+      try { localStorage.setItem('stjernekikkert_dtl_open', dtlOpen?'1':'0'); } catch(e){}
+    });
+
+    // Skrubbing (mus + touch)
+    var hitEl = document.getElementById('dtl-hit');
+    hitEl.addEventListener('mousemove', function(e){ dtlReadout(e.clientX); });
+    hitEl.addEventListener('mouseleave', function(){ dtlClearCursor(); });
+    hitEl.addEventListener('touchstart', function(e){ if(e.touches[0]) dtlReadout(e.touches[0].clientX); }, {passive:true});
+    hitEl.addEventListener('touchmove', function(e){ if(e.touches[0]){ e.preventDefault(); dtlReadout(e.touches[0].clientX); } }, {passive:false});
+  }
+
+  function dtlClearCursor(){
+    var cur = document.getElementById('dtl-cursor'); if(cur) cur.style.display='none';
+    var ro = document.getElementById('dtl-readout'); if(ro) ro.innerHTML = '<span class="muted">Dra over stripen for å lese av tidspunkt</span>';
+  }
+  function dtlReadout(clientX){
+    if (!dtlState) return;
+    var svg = document.querySelector('#darkness-timeline svg'); if(!svg) return;
+    var g = dtlState.geom, r = svg.getBoundingClientRect();
+    var vbX = (clientX - r.left)/r.width * g.W;
+    if (vbX < g.L) vbX = g.L; if (vbX > g.R) vbX = g.R;
+    var min = (vbX - g.L)/(g.R - g.L) * 1440;
+    var idx = Math.round(min/6); if(idx<0)idx=0; if(idx>240)idx=240;
+    var sa = dtlState.sunAlts[idx], ph = darknessPhase(sa), up = dtlState.moonUp[idx];
+    var t = new Date(dtlState.base.getTime() + min*60000);
+    var cur = document.getElementById('dtl-cursor');
+    cur.setAttribute('x1', vbX.toFixed(1)); cur.setAttribute('x2', vbX.toFixed(1)); cur.style.display='';
+    document.getElementById('dtl-readout').innerHTML =
+      'kl <b>'+fmtTime(t)+'</b> · '+ph.name+' <span class="muted">(sol '+Math.round(sa)+'°)</span>'+
+      (up ? ' · <span style="color:var(--gold)">🌙 måne oppe</span>' : '');
+  }
+
+  // ---- Himmelbegivenheter (TIME-3) ----
+  var evtOpen = (localStorage.getItem('stjernekikkert_evt_open') !== '0');
+  var EVT_EMO = {moon:'🌕', meteor:'☄️', planet:'🪐', eclipse:'🌑', aurora:'🌌'};
+  function renderEvents(dateStr){
+    var box = document.getElementById('events-box');
+    var from = new Date(dateStr + 'T00:00:00');
+    var list = upcomingEvents(from, 6);
+    if (!list.length){
+      // ingen igjen i 2026 — vis hele årets liste som tilbakeblikk
+      list = SKY_EVENTS.slice(-4);
+    }
+    var next = list[0];
+    var nextStr = next ? (fmtDateShort(next.date)+' — '+next.title) : 'Se astroevents.no';
+    var items = list.map(function(e){
+      return '<div class="evt-item"><div class="evt-emo">'+(EVT_EMO[e.kind]||'✦')+'</div>'+
+        '<div><div class="evt-when">'+fmtDateShort(e.date)+'</div>'+
+        '<div class="evt-name">'+htmlEscape(e.title)+'</div>'+
+        '<div class="evt-desc">'+htmlEscape(e.desc)+'</div></div></div>';
+    }).join('');
+    box.innerHTML = '<div class="evt'+(evtOpen?' open':'')+'">'+
+      '<button class="evt-head" id="evt-toggle" aria-expanded="'+(evtOpen?'true':'false')+'">'+
+        '<span class="evt-title">Kommende på himmelen</span>'+
+        '<span class="evt-next">'+htmlEscape(nextStr)+'</span>'+
+        '<span class="evt-arrow">▸</span>'+
+      '</button><div class="evt-body">'+items+
+      '<div class="evt-src">Datoer for 2026 fra <a href="https://www.astroevents.no" target="_blank" rel="noopener">astroevents.no</a> (Knut Jørgen Røed Ødegaard &amp; Anne Mette Sannes). Sjekk nettstedet for klokkeslett og oppdateringer.</div>'+
+      '</div></div>';
+    document.getElementById('evt-toggle').addEventListener('click', function(){
+      evtOpen = !evtOpen;
+      document.querySelector('.evt').classList.toggle('open', evtOpen);
+      this.setAttribute('aria-expanded', evtOpen?'true':'false');
+      try { localStorage.setItem('stjernekikkert_evt_open', evtOpen?'1':'0'); } catch(e){}
+    });
+  }
+  function fmtDateShort(iso){
+    var d = new Date(iso+'T00:00:00');
+    var mnd = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+    return d.getDate()+'. '+mnd[d.getMonth()]+' '+d.getFullYear();
+  }
+
+  // ---- Vær / skydekke (COND-1) ----
+  var wxCache = {};   // nøkkel: lat,lon,dato -> data (eller 'fail')
+  var wxOpen = (localStorage.getItem('stjernekikkert_wx_open') !== '0');
+  var wxPts = null;   // synlige søyledata for hover-avlesning
+  function wxShell(summary, body){
+    return '<div class="wx'+(wxOpen?' open':'')+'">'+
+      '<button class="wx-head" id="wx-toggle" aria-expanded="'+(wxOpen?'true':'false')+'">'+
+        '<span class="wx-title">Skydekke i natt</span>'+summary+
+        '<span class="wx-arrow">▸</span>'+
+      '</button><div class="wx-body">'+body+'</div></div>';
+  }
+  function wxBindToggle(){
+    var t = document.getElementById('wx-toggle'); if(!t) return;
+    t.addEventListener('click', function(){
+      wxOpen = !wxOpen;
+      document.querySelector('.wx').classList.toggle('open', wxOpen);
+      this.setAttribute('aria-expanded', wxOpen?'true':'false');
+      try { localStorage.setItem('stjernekikkert_wx_open', wxOpen?'1':'0'); } catch(e){}
+    });
+  }
+  function renderWeather(dateStr){
+    var box = document.getElementById('weather-box');
+    var key = lat.toFixed(2)+','+lon.toFixed(2)+','+dateStr;
+    var yr = yrUrl(lat, lon);
+    if (wxCache[key] === 'fail'){
+      box.innerHTML = wxShell('<span class="wx-now wx-fail">ikke tilgjengelig</span>',
+        '<a class="wx-yr" href="'+yr+'" target="_blank" rel="noopener">yr.no ↗</a><div class="wx-note">Fikk ikke værdata (offline?). Sjekk yr.no for varsel.</div>');
+      wxBindToggle(); return;
+    }
+    if (wxCache[key]){ drawWeather(box, wxCache[key], dateStr, yr); return; }
+    box.innerHTML = wxShell('<span class="wx-now wx-loading">henter …</span>',
+      '<a class="wx-yr" href="'+yr+'" target="_blank" rel="noopener">yr.no ↗</a>');
+    wxBindToggle();
+    fetchCloudCover(lat, lon).then(function(data){
+      wxCache[key] = data;
+      if (key === lat.toFixed(2)+','+lon.toFixed(2)+','+(liveMode?todayISO():(dateInp.value||todayISO()))) drawWeather(box, data, dateStr, yr);
+    }).catch(function(){
+      wxCache[key] = 'fail';
+      box.innerHTML = wxShell('<span class="wx-now wx-fail">ikke tilgjengelig</span>',
+        '<a class="wx-yr" href="'+yr+'" target="_blank" rel="noopener">yr.no ↗</a><div class="wx-note">Fikk ikke værdata (offline?). Sjekk yr.no for varsel.</div>');
+      wxBindToggle();
+    });
+  }
+  function drawWeather(box, data, dateStr, yr){
+    var from = new Date(dateStr+'T18:00:00'), to = new Date(from.getTime()+12*3600000);
+    var pts = data.filter(function(p){ return p.time >= from && p.time <= to; });
+    if (!pts.length){
+      box.innerHTML = wxShell('', '<a class="wx-yr" href="'+yr+'" target="_blank" rel="noopener">yr.no ↗</a><div class="wx-note">Ingen data for denne natta.</div>');
+      wxBindToggle(); return;
+    }
+    wxPts = pts;
+    var avg = Math.round(pts.reduce(function(s,p){return s+p.cloud;},0)/pts.length);
+    var best = pts.reduce(function(m,p){return p.cloud<m.cloud?p:m;}, pts[0]);
+    var bars = pts.map(function(p,i){
+      var h = Math.max(2, Math.round(p.cloud/100*44));
+      return '<div class="wx-bar" data-i="'+i+'"><div class="col" style="height:'+h+'px"></div>'+
+        '<div class="hr">'+(p.time.getHours()<10?'0':'')+p.time.getHours()+'</div></div>';
+    }).join('');
+    var note = best.cloud <= avg-15
+      ? 'Klarest rundt <b style="color:var(--cyan)">'+fmtTime(best.time)+'</b> (~'+best.cloud+'% skyer).'
+      : (avg<=25 ? 'Ser stort sett klart ut i natt 🔭' : (avg>=80 ? 'Mye skyer — kanskje en annen kveld.' : 'Vekslende skydekke.'));
+    var summary = '<span class="wx-now">snitt <b>'+avg+'%</b> ('+cloudWord(avg)+')</span>';
+    var body = '<a class="wx-yr" href="'+yr+'" target="_blank" rel="noopener">yr.no ↗</a>'+
+      '<div class="wx-readout" id="wx-readout"><span class="muted">Dra over søylene for tidspunkt og verdi</span></div>'+
+      '<div class="wx-bars" id="wx-bars">'+bars+'</div>'+
+      '<div class="wx-note">'+note+' Lavere søyle = mindre skyer. Data: Open-Meteo · fasit: yr.no.</div>';
+    box.innerHTML = wxShell(summary, body);
+    wxBindToggle();
+    bindWxHover();
+  }
+  function wxReadAt(i){
+    if (!wxPts || !wxPts[i]) return;
+    var p = wxPts[i];
+    document.getElementById('wx-readout').innerHTML =
+      'kl <b>'+fmtTime(p.time)+'</b> · <b style="color:var(--cyan)">'+p.cloud+'%</b> skyer ('+cloudWord(p.cloud)+')';
+    var bars = document.querySelectorAll('#wx-bars .wx-bar');
+    for (var j=0;j<bars.length;j++) bars[j].classList.toggle('hot', j===i);
+  }
+  function wxClear(){
+    var bars = document.querySelectorAll('#wx-bars .wx-bar');
+    for (var j=0;j<bars.length;j++) bars[j].classList.remove('hot');
+    var r = document.getElementById('wx-readout');
+    if (r) r.innerHTML = '<span class="muted">Dra over søylene for tidspunkt og verdi</span>';
+  }
+  function bindWxHover(){
+    var wrap = document.getElementById('wx-bars'); if(!wrap) return;
+    wrap.addEventListener('mousemove', function(e){
+      var b = e.target.closest('.wx-bar'); if(b) wxReadAt(+b.getAttribute('data-i'));
+    });
+    wrap.addEventListener('mouseleave', wxClear);
+    function touchAt(x){
+      var els = document.querySelectorAll('#wx-bars .wx-bar');
+      for (var j=0;j<els.length;j++){ var r=els[j].getBoundingClientRect(); if(x>=r.left && x<=r.right){ wxReadAt(j); return; } }
+    }
+    wrap.addEventListener('touchstart', function(e){ if(e.touches[0]) touchAt(e.touches[0].clientX); }, {passive:true});
+    wrap.addEventListener('touchmove', function(e){ if(e.touches[0]){ e.preventDefault(); touchAt(e.touches[0].clientX); } }, {passive:false});
+  }
+
+  // BUG-6: opp/ned-hendelser i kronologisk rekkefølge
+  function windowHtml(rs){
+    if (rs.neverAbove) return '<span class="never">Stiger ikke over 15° i dag</span>';
+    if (rs.alwaysAbove) return '<span class="circum">Sirkumpolar — alltid oppe</span>';
+    var ev = [];
+    rs.rises.forEach(function(t){ ev.push({t:t, lbl:'opp'}); });
+    rs.sets.forEach(function(t){ ev.push({t:t, lbl:'ned'}); });
+    if (!ev.length) return '<span class="never">Passerer ikke 15°-grensen i dag</span>';
+    ev.sort(function(a,b){ return a.t - b.t; });
+    return ev.map(function(e){ return '<span class="lbl">'+e.lbl+'</span> <span class="t">'+fmtTime(e.t)+'</span>'; }).join(' &nbsp;·&nbsp; ');
+  }
+
+  var liveMode = false, liveInterval = null;
+  function setLiveMode(on){
+    liveMode = on;
+    var btn = document.getElementById('live-btn'), txt = document.getElementById('live-btn-txt');
+    if (on){ txt.innerHTML='⏹&nbsp; Stopp live-visning'; btn.classList.add('live-active'); liveInterval=setInterval(render,30000); }
+    else { txt.innerHTML='📡&nbsp; Vis aktuell posisjon NÅ'; btn.classList.remove('live-active'); if(liveInterval){clearInterval(liveInterval);liveInterval=null;} }
+    render();
+  }
+  document.getElementById('live-btn').addEventListener('click', function(){ setLiveMode(!liveMode); });
+
+  function bestReason(x){
+    if (x.o.type==='moon' || x.o.type==='planet') return 'Lyssterkt og lett å finne';
+    if (x.o.type==='double' || x.o.type==='cluster') return 'Greit å finne for nybegynnere';
+    return 'Godt plassert i kveld';
+  }
+  function renderBest(visible, sunAlt, moonInfo){
+    var box = document.getElementById('best-box');
+    if (sunAlt > -3){ box.innerHTML=''; return; }  // for lyst
+    var moonUp = moonInfo.alt >= 0, brightMoon = moonUp && moonInfo.phase.illum > 60;
+    var cand = visible.filter(function(x){ return x.alt >= 20; }).map(function(x){
+      var sc = x.alt, t = x.o.type;
+      if (t==='moon' || t==='planet') sc += 25;
+      else if (t==='cluster' || t==='double') sc += 10;
+      else if (t==='globular') sc += 5;
+      else if ((t==='galaxy' || t==='nebula') && brightMoon) sc -= 20;
+      return {x:x, sc:sc};
+    }).sort(function(a,b){ return b.sc - a.sc; }).slice(0,3);
+    if (!cand.length){ box.innerHTML=''; return; }
+    box.innerHTML = '<div class="best-box"><div class="bt">★ Kveldens beste — start her</div>'+
+      cand.map(function(c){
+        return '<div class="best-item"><span class="emo">'+c.x.o.emo+'</span><span class="nm">'+htmlEscape(c.x.o.name)+
+          '</span><span class="rs">'+bestReason(c.x)+' · <b>'+intc(c.x.alt)+'°</b> '+compassSimple(c.x.az)+'</span></div>';
+      }).join('')+'</div>';
+  }
+
+  function render(){
+    var now = new Date();
+    var dateStr = liveMode ? todayISO() : (dateInp.value || todayISO());
+    if (liveMode) dateInp.value = dateStr;
+    var date = new Date(dateStr + 'T12:00:00');
+    var fromMin = hm2min(timeFrom.value);
+    var checkTime = liveMode ? now : new Date(date.getTime()); 
+    if (!liveMode) checkTime = new Date(new Date(dateStr+'T00:00:00').getTime() + fromMin*60000);
+
+    var filterActive = !(timeFrom.value==='00:00' && timeTo.value==='00:00');
+    timeBadge.textContent = filterActive ? ('Synlig '+timeFrom.value+'–'+timeTo.value) : 'Alle tider';
+    timeBadge.className = 'time-badge' + (filterActive ? ' active' : '');
+
+    var homeName = (setup.home && setup.home.name) ? ' ('+setup.home.name+')' : '';
+    var liveTag = liveMode ? ' &nbsp;<span style="color:var(--rust);font-family:\'JetBrains Mono\',monospace;font-size:.76rem">● '+fmtTime(now)+'</span>' : '';
+    document.getElementById('loc-label').innerHTML = lat.toFixed(3)+'°N · '+lon.toFixed(3)+'°Ø'+homeName+liveTag;
+
+    var sunAlt = altAz(sunPos(checkTime).ra, sunPos(checkTime).dec, checkTime, lat, lon).alt;
+
+    // Månen (AST-1)
+    var mp = moonPos(checkTime), mPhase = moonPhase(checkTime), mAA = altAz(mp.ra, mp.dec, checkTime, lat, lon);
+    var mRs = riseSet(mp.ra, mp.dec, date, lat, lon, 15); mRs.ra=mp.ra; mRs.dec=mp.dec;
+    var moonInfo = {alt:mAA.alt, az:mAA.az, phase:mPhase};
+    var moonObj = {id:'luna', emo:mPhase.emoji, name:'Månen', type:'moon', idealMag:60,
+      why:mPhase.name+' ('+mPhase.illum+'% belyst)', size:null, ra:mp.ra, dec:mp.dec};
+
+    renderSunStatus(liveMode ? now : checkTime, moonInfo);
+    renderDarknessTimeline(dateStr, now);
+    renderWeather(dateStr);
+    renderEvents(dateStr);
+    checkSetupBanner();
+
+    // AST-2: hint om sterk måne
+    var mw = document.getElementById('moon-warn');
+    mw.innerHTML = (moonInfo.alt >= 0 && mPhase.illum > 60 && sunAlt < -6)
+      ? '<div class="moon-warn"><span style="font-size:1.1rem">'+mPhase.emoji+'</span><span>Sterk måne i kveld ('+mPhase.illum+'% oppe) — den vasker ut svake galakser og tåker. Favoriser <b>Månen, planeter, dobbeltstjerner og stjernehoper</b>.</span></div>'
+      : '';
+
+    var tFl = setup.telescope.fl, ap = setup.telescope.ap, barlow = setup.barlow, owned = getOwnedEyepieces(setup);
+
+    var livePlanets = PLANETS_2026.map(function(p){
+      var pos = planetPos(p.id, checkTime); if(!pos) return null;
+      return {id:p.id, emo:p.emo, name:p.name, ra:pos.ra, dec:pos.dec, type:p.type, idealMag:p.idealMag, why:p.why, size:null};
+    }).filter(Boolean);
+
+    function compute(o){
+      var aa = altAz(o.ra, o.dec, checkTime, lat, lon);
+      var rs = riseSet(o.ra, o.dec, date, lat, lon, 15); rs.ra=o.ra; rs.dec=o.dec;
+      return {o:o, alt:aa.alt, az:aa.az, rs:rs, inWindow:inTimeWindow(rs, dateStr)};
+    }
+    var moonComp = compute(moonObj);
+    var all = [moonComp].concat(livePlanets.map(compute)).concat(SKY_CATALOG.map(compute));
+
+    all.sort(function(a,b){
+      var as=(a.inWindow?2:0)+(a.alt>=15?1:0), bs=(b.inWindow?2:0)+(b.alt>=15?1:0);
+      if (as!==bs) return bs-as;
+      return b.rs.peakAlt - a.rs.peakAlt;
+    });
+
+    elevData = {}; all.forEach(function(x){ elevData[x.o.id] = x; });
+    currentDate = date;
+
+    var visible = all.filter(function(x){ return !x.rs.neverAbove; });
+    var notRising = all.filter(function(x){ return x.rs.neverAbove; });
+
+    renderBest(visible, sunAlt, moonInfo);
+    document.getElementById('log-count').innerHTML = 'Du har sett <b>'+seenCount()+'</b> av '+(SKY_CATALOG.length)+' katalogobjekter';
+
+    var box = document.getElementById('obj-list');
+    if (!visible.length && !notRising.length){ box.innerHTML='<p class="sky-empty">Ingen objekter beregnet.</p>'; return; }
+
+    var html = '';
+    // Solsystemet (Måne + planeter) hører alltid sammen, uansett høyde
+    var solAll = all.filter(function(x){ return x.o.type==='moon' || x.o.type==='planet'; });
+    var vMoon = solAll.filter(function(x){ return x.o.type==='moon'; });
+    var vPlanets = solAll.filter(function(x){ return x.o.type==='planet'; })
+      .sort(function(a,b){ return b.alt - a.alt; });
+    // Dyprom deles i synlige og «stiger ikke»
+    var vDso = visible.filter(function(x){ return x.o.type!=='planet' && x.o.type!=='moon'; });
+    var dsoNotRising = notRising.filter(function(x){ return x.o.type!=='planet' && x.o.type!=='moon'; });
+
+    function section(key, title, items){
+      if (!items.length) return '';
+      var open = localStorage.getItem('stjernekikkert_sec_'+key) !== '0';
+      var cards = items.map(function(x){ return buildCard(x, tFl, ap, barlow, owned); }).join('');
+      return '<div class="sky-sec'+(open?' open':'')+'" data-sec="'+key+'">'+
+        '<button class="sky-sec-head" aria-expanded="'+(open?'true':'false')+'">'+
+          '<span class="sky-sec-title">'+title+'</span>'+
+          '<span class="sky-sec-count">'+items.length+'</span>'+
+          '<span class="sky-sec-arrow">▸</span>'+
+        '</button><div class="sky-sec-body">'+cards+'</div></div>';
+    }
+
+    html += section('sol', 'Solsystemet', vMoon.concat(vPlanets));
+    html += section('dso', 'Dypromobjekter', vDso);
+    if (dsoNotRising.length) html += section('under', 'Stiger ikke over 15° i dag', dsoNotRising.slice(0,6));
+    box.innerHTML = html;
+  }
+
+  function buildCard(x, tFl, ap, barlow, owned){
+    var o = x.o, rs = x.rs, currentlyUp = x.alt >= 15;
+    var typeTxt = TYPE_LABEL[o.type] || o.type;
+    var seen = isSeen(o.id);
+
+    var altBlock;
+    if (rs.neverAbove){
+      altBlock = '<div class="obj-alt"><div class="below">Aldri 15°</div><div class="dir-simple">i dag</div></div>';
+    } else if (currentlyUp){
+      altBlock = '<div class="obj-alt"><div class="deg">'+intc(x.alt)+'°</div><div class="dir-simple">↑ Elevering</div>'+
+        '<button class="dir-compass" data-az="'+x.az+'" title="Trykk for kompassvisning">'+compassSimple(x.az)+' · '+intc(x.az)+'°</button></div>';
+    } else {
+      altBlock = '<div class="obj-alt"><div class="below">'+intc(x.alt)+'°</div><div class="dir-simple" style="font-size:.72rem">ved '+timeFrom.value+'</div></div>';
+    }
+
+    var cardClass = 'obj-card' + (rs.neverAbove ? ' dim' : (x.alt > 40 ? ' high' : '')) + (x.inWindow===false ? ' outside-window' : '');
+
+    // Undertekst: mag + størrelse/separasjon
+    var sub = [];
+    if (o.mag != null) sub.push('mag '+o.mag);
+    if (o.size != null) sub.push(o.size+'′ stor');
+    else if (o.sep != null) sub.push('sep '+o.sep+'″');
+    var subHtml = sub.length ? '<div class="obj-sub">'+sub.join(' · ')+'</div>' : '';
+
+    var typeTag = (o.type==='moon') ? '<span class="type-tag moon">Månen</span>' : '<span class="type-tag '+o.type+'">'+typeTxt+'</span>';
+    var seenBtn = '<div class="obj-actions"><button class="seen-btn'+(seen?' on':'')+'" data-seen="'+o.id+'">'+(seen?'<span class="ck">✓</span> Sett':'+ Sett det')+'</button></div>';
+
+    var peakHtml = '';
+    if (!rs.neverAbove){
+      var pLabel = rs.alwaysAbove ? 'Topp' : 'Maks';
+      peakHtml = '<button class="peak peak-link" data-elev="'+o.id+'" title="Vis høydekurve">'+pLabel+' <b>'+intc(rs.peakAlt)+'°</b> kl '+fmtTime(rs.peakTime)+' ▸</button>';
+    }
+    var winHtml = '<div class="obj-window"><div class="times">'+windowHtml(rs)+'</div>'+peakHtml+'</div>';
+
+    var epHtml = '';
+    if (owned.length && o.type!=='moon'){
+      var combo = bestComboFor(o.idealMag, tFl, ap, owned, barlow);
+      if (combo){
+        var bTag = (combo.b>1) ? '<span class="b-tag">'+combo.b+'× barlow</span>' : '';
+        var qualTxt = combo.quality==='good'?'◉ perfekt':combo.quality==='fair'?'◐ brukbart':'◯ ikke ideelt';
+        var upgrade = combo.quality==='poor' ? bestUpgradeFor(o.idealMag, tFl, setup) : null;
+        // FIND-2: synsfelt / innramming  +  EYE-2: drift-tid
+        var fovHtml = '';
+        var fov = trueFovArcmin(combo.ep.afov, combo.mag);
+        var drift = fov ? driftMinutes(fov, o.dec) : null;
+        var driftTxt = drift ? ' <span style="color:var(--ink-faint)">· driver ut på ~'+(drift<1?'<1':Math.round(drift))+' min</span>' : '';
+        if (o.size != null && fov){
+          var v = framingVerdict(o.size, fov);
+          fovHtml = '<div class="fov-line fov-note'+(v && v.tight?' tight':'')+'">Synsfelt ≈ <b>'+(fov/60).toFixed(2)+'°</b> — '+(v?v.text:'')+driftTxt+'</div>';
+        } else if (o.sep != null){
+          var resolves = combo.mag >= (o.sep < 4 ? 120 : 50);
+          fovHtml = '<div class="fov-line fov-note">Separasjon '+o.sep+'″ — '+(resolves?'<b>nok forstørrelse til å splitte</b>':'øk forstørrelsen for å splitte')+driftTxt+'</div>';
+        }
+        epHtml = '<div class="obj-ep"><div class="obj-ep-label">Beste oppsett</div>'+
+          '<div class="obj-ep-name">'+htmlEscape(combo.ep.name)+bTag+'</div>'+
+          '<div class="obj-ep-mag"><div class="mg '+combo.quality+'">'+intc(combo.mag)+'×</div><div class="q">'+qualTxt+'</div></div>'+
+          (upgrade ? '<div class="obj-upgrade">💡 Kjøpstips: <b>'+htmlEscape(upgrade.model)+'</b>'+(upgrade.price?' · ≈ '+upgrade.price+' NOK':'')+' vil gi <b>'+intc(tFl/upgrade.fl)+'×</b> — mye bedre for dette objektet</div>' : '')+
+          fovHtml+'</div>';
+      }
+    }
+
+    // Topp-3 blant ALLE okularer (også de man ikke eier) — utfellbar dropdown (også for Månen)
+    var allEpHtml = '';
+    if (o.idealMag){
+      var top = topEyepiecesFor(o.idealMag, tFl, ap, setup, 3);
+      if (top.length){
+        var rows = top.map(function(t){
+          var qd = t.quality==='good'?'◉':t.quality==='fair'?'◐':'◯';
+          var bt = t.b>1 ? ' <span style="color:var(--gold)">+'+t.b+'×</span>' : '';
+          var own = t.owned ? '<span class="ae-own">eier</span>' : (t.preset.price?'<span class="ae-price">≈ '+t.preset.price+' kr</span>':'');
+          return '<div class="ae-row"><span class="ae-q '+t.quality+'">'+qd+'</span>'+
+            '<span class="ae-name">'+htmlEscape(t.preset.brand+' '+t.preset.model)+bt+'</span>'+
+            '<span class="ae-mag">'+intc(t.mag)+'×</span>'+own+'</div>';
+        }).join('');
+        allEpHtml = '<div class="ae" data-ae="'+o.id+'">'+
+          '<button class="ae-head" aria-expanded="false"><span class="ae-title">▸ Beste okular blant alle</span></button>'+
+          '<div class="ae-body">'+rows+'<div class="ae-note">Rangert for ~'+o.idealMag+'× i din kikkert. ◉ perfekt · ◐ brukbart · ◯ nødløsning.</div></div></div>';
+      }
+    }
+
+    var anchorHtml = (o.anchor && !rs.neverAbove) ? '<div class="anchor-hint clickable" data-finder="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" style="margin:0 16px 12px"><b>Slik finner du den:</b> '+htmlEscape(o.anchor)+' <span class="tap">▸ vis kart</span></div>' : '';
+
+    return '<div class="'+cardClass+'"><div class="obj-main"><div class="obj-emo">'+o.emo+'</div>'+
+      '<div class="obj-body"><div class="obj-name">'+htmlEscape(o.name)+typeTag+'</div>'+
+      '<div class="obj-why">'+htmlEscape(o.why)+'</div>'+subHtml+seenBtn+'</div>'+altBlock+'</div>'+winHtml+epHtml+allEpHtml+anchorHtml+'</div>';
+  }
+
+  // ---- Kompass-SVG (uendret prinsipp) ----
+  function buildCompassSVG(bearing){
+    var b=((bearing%360)+360)%360, cx=100, cy=100, OR=84, IR=56;
+    function pt(deg,r){ var a=deg*Math.PI/180; return [(cx+r*Math.sin(a)).toFixed(1),(cy-r*Math.cos(a)).toFixed(1)]; }
+    var ticks='';
+    for (var d=0; d<360; d+=5){
+      var inner=OR-(d%10===0?10:5), sw=d%90===0?1.8:(d%10===0?1.2:0.8), tc=d%90===0?'#aaa':(d%10===0?'#666':'#444');
+      var p1=pt(d,OR), p2=pt(d,inner);
+      ticks+='<line x1="'+p1[0]+'" y1="'+p1[1]+'" x2="'+p2[0]+'" y2="'+p2[1]+'" stroke="'+tc+'" stroke-width="'+sw+'"/>';
+    }
+    var cl=[['N',0,'#e44'],['E',90,'#aaa'],['S',180,'#aaa'],['W',270,'#aaa']].map(function(c){
+      var p=pt(c[1],OR-18); return '<text x="'+p[0]+'" y="'+p[1]+'" text-anchor="middle" dominant-baseline="central" fill="'+c[2]+'" font-family="Arial" font-size="12" font-weight="bold">'+c[0]+'</text>';
+    }).join('');
+    var dn=''; [30,60,120,150,210,240,300,330].forEach(function(dd){ var p=pt(dd,OR-17); dn+='<text x="'+p[0]+'" y="'+p[1]+'" text-anchor="middle" dominant-baseline="central" fill="#555" font-family="Arial" font-size="6.5">'+dd+'</text>'; });
+    var oa='<polygon points="100,'+(cy-IR+4)+' 95,'+(cy-IR+20)+' 105,'+(cy-IR+20)+'" fill="#e44"/><line x1="100" y1="'+(cy-IR+20)+'" x2="100" y2="'+(cy+IR-10)+'" stroke="#e44" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.5"/>';
+    var ol='<line x1="'+(cx-14)+'" y1="'+(cy-18)+'" x2="'+(cx-14)+'" y2="'+(cy+18)+'" stroke="#e44" stroke-width="1.1" stroke-dasharray="3,2" opacity="0.55"/><line x1="'+(cx+14)+'" y1="'+(cy-18)+'" x2="'+(cx+14)+'" y2="'+(cy+18)+'" stroke="#e44" stroke-width="1.1" stroke-dasharray="3,2" opacity="0.55"/>';
+    var NL=cy-IR+10, SL=cy+IR-10;
+    var needle='<polygon points="'+cx+','+NL+' '+(cx-7)+','+cy+' '+(cx+7)+','+cy+'" fill="#e44"/><polygon points="'+cx+','+SL+' '+(cx-7)+','+cy+' '+(cx+7)+','+cy+'" fill="#777"/>';
+    return '<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">'+
+      '<circle cx="100" cy="100" r="94" fill="#12121e" stroke="#1e1e2e" stroke-width="2"/>'+
+      '<g transform="rotate('+(-b)+',100,100)"><circle cx="100" cy="100" r="'+OR+'" fill="#1a1a28" stroke="#2a2a3a" stroke-width="1.5"/>'+ticks+cl+dn+
+      '<circle cx="100" cy="100" r="'+IR+'" fill="rgba(18,28,58,0.9)"/>'+oa+ol+needle+'</g>'+
+      '<circle cx="100" cy="100" r="'+IR+'" fill="none" stroke="rgba(80,110,200,0.18)" stroke-width="1.5"/>'+
+      '<polygon points="100,7 94,17 106,17" fill="#f55"/><circle cx="100" cy="100" r="5" fill="#dde" stroke="#111" stroke-width="1.5"/></svg>';
+  }
+
+  // ---- Kompass-modal (A11Y-2: dialog + fokus) ----
+  var modal = document.getElementById('compass-modal'), lastFocus = null;
+  function openCompassModal(az, name){
+    var a=((Math.round(az)%360)+360)%360;
+    document.getElementById('cm-objname').textContent = name;
+    document.getElementById('cm-bearing').textContent = compassSimple(az)+' · '+a+'°';
+    document.getElementById('cm-step-deg').textContent = a;
+    document.getElementById('cm-svg').innerHTML = buildCompassSVG(a);
+    lastFocus = document.activeElement;
+    modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
+    document.getElementById('cm-close-btn').focus();
+  }
+  function closeCompassModal(){
+    modal.classList.remove('show'); modal.setAttribute('aria-hidden','true');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  document.getElementById('cm-close-btn').addEventListener('click', closeCompassModal);
+  document.getElementById('cm-close-bg').addEventListener('click', closeCompassModal);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && modal.classList.contains('show')) closeCompassModal(); });
+
+  // ---- Høydekurve-modal (TIME-2) ----
+  var elevData = {}, currentDate = new Date();
+  var elevModal = document.getElementById('elev-modal'), elevLastFocus = null, elevSamples = null;
+  // Plott-geometri (viewBox-koordinater)
+  var EG = {W:340, H:210, L:34, R:330, T:12, B:180, yMax:90};
+  function exMin(min){ return EG.L + (min/1440)*(EG.R - EG.L); }
+  function eyAlt(alt){ var a = alt<0?0:(alt>EG.yMax?EG.yMax:alt); return EG.B - (a/EG.yMax)*(EG.B - EG.T); }
+
+  function buildElevChart(x){
+    var o = x.o, rs = x.rs;
+    // Vindu: kl 12:00 (middag) på valgt dato → 12:00 neste dag, så midnatt havner midt i grafen
+    var base = new Date(currentDate); base.setHours(12,0,0,0);
+    // sampler hver 6. min. For Månen beregnes posisjonen på nytt hvert steg
+    // (den flytter seg ~0,5°/time), ellers brukes objektets faste ra/dec.
+    var isMoon = (o.type === 'moon');
+    var pts = [];
+    for (var m = 0; m <= 1440; m += 6){
+      var t = new Date(base.getTime() + m*60000);
+      var alt;
+      if (isMoon){ var mp = moonPos(t); alt = altAz(mp.ra, mp.dec, t, lat, lon).alt; }
+      else { alt = altAz(o.ra, o.dec, t, lat, lon).alt; }
+      pts.push({min:m, alt: alt});
+    }
+    elevSamples = {pts:pts, base:base};
+
+    var line = pts.map(function(p){ return exMin(p.min).toFixed(1)+','+eyAlt(p.alt).toFixed(1); }).join(' ');
+    var area = exMin(0).toFixed(1)+','+EG.B+' '+line+' '+exMin(1440).toFixed(1)+','+EG.B;
+
+    var grid = '';
+    [0,30,60,90].forEach(function(a){ var y=eyAlt(a).toFixed(1);
+      grid += '<line class="em-axis" x1="'+EG.L+'" y1="'+y+'" x2="'+EG.R+'" y2="'+y+'"/>'+
+              '<text class="em-axislbl" x="'+(EG.L-4)+'" y="'+(+y+3)+'" text-anchor="end">'+a+'°</text>'; });
+    // Tidsakse: middag(12) · 18 · midnatt(00) · 06 · middag(12)
+    var xticks = [{m:0,lbl:'12'},{m:360,lbl:'18'},{m:720,lbl:'00'},{m:1080,lbl:'06'},{m:1440,lbl:'12'}];
+    var xt = '';
+    xticks.forEach(function(tk){ var px=exMin(tk.m).toFixed(1), midn = tk.m===720;
+      xt += '<line class="'+(midn?'em-midnight':'em-grid')+'" x1="'+px+'" y1="'+EG.T+'" x2="'+px+'" y2="'+EG.B+'"/>'+
+            '<text class="em-axislbl'+(midn?' em-midlbl':'')+'" x="'+px+'" y="'+(EG.B+12)+'" text-anchor="middle">'+tk.lbl+'</text>'; });
+    var thrY = eyAlt(15).toFixed(1);
+    var thr = '<line class="em-thr" x1="'+EG.L+'" y1="'+thrY+'" x2="'+EG.R+'" y2="'+thrY+'"/>';
+
+    var peakMark = '';
+    if (!rs.neverAbove){
+      // finn toppunktet innenfor det viste vinduet (kan avvike litt fra rs.peakTime som dekker kalenderdøgnet)
+      var top = pts[0]; for (var i=1;i<pts.length;i++){ if (pts[i].alt > top.alt) top = pts[i]; }
+      var pX = exMin(top.min).toFixed(1), pY = eyAlt(top.alt).toFixed(1);
+      peakMark = '<circle class="em-peak" cx="'+pX+'" cy="'+pY+'" r="3"/>'+
+                 '<text class="em-peaklbl" x="'+pX+'" y="'+(+pY-6)+'" text-anchor="middle">'+intc(top.alt)+'°</text>';
+    }
+
+    var svg = '<svg viewBox="0 0 '+EG.W+' '+EG.H+'" xmlns="http://www.w3.org/2000/svg">'+
+      grid + xt + thr +
+      '<polygon class="em-fill" points="'+area+'"/>'+
+      '<polyline class="em-curve" points="'+line+'"/>'+
+      peakMark +
+      '<line class="em-axis" x1="'+EG.L+'" y1="'+EG.T+'" x2="'+EG.L+'" y2="'+EG.B+'"/>'+
+      '<line class="em-axis" x1="'+EG.L+'" y1="'+EG.B+'" x2="'+EG.R+'" y2="'+EG.B+'"/>'+
+      '<line class="em-cursor" id="em-cursor" x1="0" y1="'+EG.T+'" x2="0" y2="'+EG.B+'" style="display:none"/>'+
+      '<circle class="em-dot" id="em-dot" cx="0" cy="0" r="3" style="display:none"/>'+
+      '<rect class="em-hit" id="em-hit" x="'+EG.L+'" y="'+EG.T+'" width="'+(EG.R-EG.L)+'" height="'+(EG.B-EG.T)+'"/>'+
+      '</svg>';
+    return svg;
+  }
+
+  function elevReadout(clientX){
+    if (!elevSamples) return;
+    var svg = document.querySelector('#em-chart svg'); if(!svg) return;
+    var r = svg.getBoundingClientRect();
+    var vbX = (clientX - r.left)/r.width * EG.W;          // pixel -> viewBox-x
+    if (vbX < EG.L) vbX = EG.L; if (vbX > EG.R) vbX = EG.R;
+    var min = (vbX - EG.L)/(EG.R - EG.L) * 1440;
+    var idx = min/6, i0 = Math.floor(idx), i1 = Math.min(i0+1, elevSamples.pts.length-1), f = idx - i0;
+    var alt = elevSamples.pts[i0].alt*(1-f) + elevSamples.pts[i1].alt*f;
+    var t = new Date(elevSamples.base.getTime() + min*60000);
+    var cur = document.getElementById('em-cursor'), dot = document.getElementById('em-dot');
+    cur.setAttribute('x1', vbX.toFixed(1)); cur.setAttribute('x2', vbX.toFixed(1)); cur.style.display='';
+    dot.setAttribute('cx', vbX.toFixed(1)); dot.setAttribute('cy', eyAlt(alt).toFixed(1)); dot.style.display='';
+    var ro = document.getElementById('em-readout');
+    ro.innerHTML = (alt > 0)
+      ? 'kl '+fmtTime(t)+' · <b>'+Math.round(alt)+'°</b> over horisonten' + (alt < 15 ? ' <span class="muted">(lavt)</span>' : '')
+      : 'kl '+fmtTime(t)+' · <span class="muted">under horisonten</span>';
+  }
+
+  function openElevModal(id){
+    var x = elevData[id]; if(!x) return;
+    document.getElementById('em-title').innerHTML = x.o.emo+' '+htmlEscape(x.o.name);
+    document.getElementById('em-readout').innerHTML = '<span class="muted">Dra fingeren eller musepekeren over kurven</span>';
+    document.getElementById('em-chart').innerHTML = buildElevChart(x);
+    var hit = document.getElementById('em-hit');
+    hit.addEventListener('mousemove', function(e){ elevReadout(e.clientX); });
+    hit.addEventListener('touchstart', function(e){ if(e.touches[0]){ elevReadout(e.touches[0].clientX); } }, {passive:true});
+    hit.addEventListener('touchmove', function(e){ if(e.touches[0]){ e.preventDefault(); elevReadout(e.touches[0].clientX); } }, {passive:false});
+    elevLastFocus = document.activeElement;
+    elevModal.classList.add('show'); elevModal.setAttribute('aria-hidden','false');
+    document.getElementById('em-close-btn').focus();
+  }
+  function closeElevModal(){
+    elevModal.classList.remove('show'); elevModal.setAttribute('aria-hidden','true'); elevSamples = null;
+    if (elevLastFocus && elevLastFocus.focus) elevLastFocus.focus();
+  }
+  document.getElementById('em-close-btn').addEventListener('click', closeElevModal);
+  document.getElementById('em-close-bg').addEventListener('click', closeElevModal);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && elevModal.classList.contains('show')) closeElevModal(); });
+
+  // ---- Finnekart-modal (FIND-4) ----
+  var finderModal = document.getElementById('finder-modal'), finderLastFocus = null;
+  function openFinderModal(id, raH, decDeg){
+    var o = elevData[id] ? elevData[id].o : null;
+    var name = o ? o.name : 'Objekt', emo = o ? o.emo : '✦', anchor = o ? o.anchor : '';
+    document.getElementById('fm-title').innerHTML = emo+' '+htmlEscape(name);
+    document.getElementById('fm-chart').innerHTML = buildFinder(id, raH, decDeg, name);
+    document.getElementById('fm-hint').innerHTML = anchor ? '<b style="color:var(--cyan)">Slik finner du den:</b> '+htmlEscape(anchor) : '';
+    finderLastFocus = document.activeElement;
+    finderModal.classList.add('show'); finderModal.setAttribute('aria-hidden','false');
+    document.getElementById('fm-close-btn').focus();
+  }
+  function closeFinderModal(){
+    finderModal.classList.remove('show'); finderModal.setAttribute('aria-hidden','true');
+    if (finderLastFocus && finderLastFocus.focus) finderLastFocus.focus();
+  }
+  document.getElementById('fm-close-btn').addEventListener('click', closeFinderModal);
+  document.getElementById('fm-close-bg').addEventListener('click', closeFinderModal);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && finderModal.classList.contains('show')) closeFinderModal(); });
+
+  // Klikk-delegering: kompass-knapp + sett-det-knapp (A11Y-1 / FIND-1)
+  document.getElementById('obj-list').addEventListener('click', function(e){
+    var cBtn = e.target.closest && e.target.closest('.dir-compass');
+    if (cBtn){
+      var card = cBtn.closest('.obj-card'), nm = card ? card.querySelector('.obj-name') : null;
+      var name = 'Objekt';
+      if (nm){ var f = nm.firstChild; name = (f && f.nodeType===3) ? f.textContent.trim() : nm.textContent.trim(); }
+      openCompassModal(parseFloat(cBtn.getAttribute('data-az')), name);
+      return;
+    }
+    var sBtn = e.target.closest && e.target.closest('.seen-btn');
+    if (sBtn){
+      var now = toggleSeen(sBtn.getAttribute('data-seen'));
+      sBtn.classList.toggle('on', now);
+      sBtn.innerHTML = now ? '<span class="ck">✓</span> Sett' : '+ Sett det';
+      document.getElementById('log-count').innerHTML = 'Du har sett <b>'+seenCount()+'</b> av '+SKY_CATALOG.length+' katalogobjekter';
+      return;
+    }
+    var pBtn = e.target.closest && e.target.closest('.peak-link');
+    if (pBtn){ openElevModal(pBtn.getAttribute('data-elev')); return; }
+    var aeBtn = e.target.closest && e.target.closest('.ae-head');
+    if (aeBtn){
+      var ae = aeBtn.closest('.ae'); var open = ae.classList.toggle('open');
+      aeBtn.setAttribute('aria-expanded', open?'true':'false');
+      var t = aeBtn.querySelector('.ae-title'); if(t) t.textContent = (open?'▾':'▸')+' Beste okular blant alle';
+      return;
+    }
+    var secBtn = e.target.closest && e.target.closest('.sky-sec-head');
+    if (secBtn){
+      var sec = secBtn.closest('.sky-sec'); var sopen = sec.classList.toggle('open');
+      secBtn.setAttribute('aria-expanded', sopen?'true':'false');
+      try { localStorage.setItem('stjernekikkert_sec_'+sec.getAttribute('data-sec'), sopen?'1':'0'); } catch(e2){}
+      return;
+    }
+    var aBtn = e.target.closest && e.target.closest('.anchor-hint.clickable');
+    if (aBtn){ openFinderModal(aBtn.getAttribute('data-finder'), parseFloat(aBtn.getAttribute('data-ra')), parseFloat(aBtn.getAttribute('data-dec'))); }
+  });
+
+  initNightMode();
+  render();
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+</body>
+</html>

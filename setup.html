@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oppsett — Stjernekikkert</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%AD%90</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080b18">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+/* Sidespesifikk stil (felles ligger i shared.css) */
+label.fld{display:block;font-size:.78rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;font-weight:500}
+select,input[type=number],input[type=text],input[type=url]{
+  width:100%;background:var(--panel-soft);color:var(--ink);
+  border:1px solid var(--line-strong);border-radius:10px;
+  padding:11px 13px;font-family:'Outfit',sans-serif;font-size:.97rem;transition:border-color .15s,box-shadow .15s;
+}
+select:focus,input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,196,106,.14)}
+.grid3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:90px;cursor:pointer;background:var(--panel-soft);color:var(--ink-soft);border:1px solid var(--line-strong);border-radius:10px;padding:12px 8px;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:500;transition:all .15s}
+.seg button .big{display:block;font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;margin-bottom:1px}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:linear-gradient(180deg,#2a2240,#1c1832);border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(240,196,106,.10)}
+.loc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.loc-btn{background:var(--panel-soft);color:var(--ink-soft);border:1px solid var(--line-strong);border-radius:8px;padding:9px 14px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.85rem;transition:all .15s}
+.loc-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+.ep-group{margin-bottom:18px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ep-group-hd{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;background:rgba(255,255,255,.02);user-select:none;border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);transition:background .15s;width:100%;text-align:left;border-left:none;border-right:none;border-top:none}
+.ep-group-hd:hover{background:rgba(255,255,255,.05)}
+.ep-group-hd:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.ep-group-hd .toggle-arrow{margin-left:auto;transition:transform .2s;font-size:.85rem;color:var(--ink-faint)}
+.ep-group.open .toggle-arrow{transform:rotate(90deg)}
+.ep-group-body{display:none}
+.ep-group.open .ep-group-body{display:block}
+.ep-group.always-open .ep-group-hd{cursor:default}
+
+.ep-row{padding:12px 16px;border-bottom:1px solid var(--line);display:grid;gap:8px 12px;grid-template-columns:auto 1fr;grid-template-areas:"cb info" "cb fields";align-items:start}
+.ep-row:last-child{border-bottom:none}
+.ep-row.owned{background:rgba(111,216,224,.04)}
+.ep-cb{grid-area:cb;padding-top:14px}
+.ep-cb input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--cyan)}
+.ep-info{grid-area:info;display:flex;flex-direction:column;gap:2px;min-width:0;padding-top:2px}
+.ep-name{font-size:.95rem;font-weight:500;color:var(--ink);line-height:1.3}
+.ep-meta{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-faint);letter-spacing:.03em}
+.ep-fields{grid-area:fields;display:grid;grid-template-columns:130px 1fr;gap:8px;align-items:center}
+.ep-price{width:130px}
+.ep-link-wrap{display:flex;gap:6px;align-items:center;min-width:0}
+.ep-link-wrap input{flex:1;min-width:0;font-size:.88rem}
+.link-open-btn{background:none;border:1px solid var(--line-strong);color:var(--ink-faint);border-radius:6px;padding:7px 9px;cursor:pointer;font-size:.85rem;white-space:nowrap;transition:all .15s;flex:none}
+.link-open-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.link-open-btn:disabled{opacity:.3;cursor:default}
+
+.custom-form{border:1px dashed var(--gold-deep);border-radius:12px;padding:18px;margin-top:16px;background:rgba(240,196,106,.04)}
+.custom-form-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.custom-fields{display:grid;grid-template-columns:1fr 1fr 1fr 80px;gap:10px;margin-bottom:10px}
+.custom-btn-row{display:flex;gap:8px;margin-top:10px}
+.btn-primary{background:rgba(111,216,224,.15);color:var(--cyan);border:1px solid rgba(111,216,224,.4);border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:500;transition:all .15s}
+.btn-primary:hover{background:rgba(111,216,224,.25)}
+.btn-ghost{background:none;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:8px;padding:9px 14px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem;transition:all .15s}
+.btn-ghost:hover{color:var(--ink);border-color:var(--line)}
+.add-custom-toggle{width:100%;margin-top:4px;cursor:pointer;background:rgba(240,196,106,.08);color:var(--gold);border:1px dashed var(--gold-deep);border-radius:10px;padding:11px;font-family:'Outfit',sans-serif;font-size:.92rem;font-weight:500;transition:background .15s}
+.add-custom-toggle:hover{background:rgba(240,196,106,.16)}
+.custom-ep-item{background:rgba(240,196,106,.06);border:1px solid rgba(240,196,106,.2);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.custom-ep-item .ep-name{flex:1}
+.del-btn{background:none;border:1px solid var(--line-strong);color:var(--ink-faint);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:.9rem;transition:all .15s;flex:none;display:grid;place-items:center}
+.del-btn:hover{border-color:var(--rust);color:var(--rust)}
+
+/* Data-knapper (DATA-1 / NIT-1) */
+.data-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-danger{background:rgba(232,131,90,.10);color:var(--rust);border:1px solid rgba(232,131,90,.4);border-radius:8px;padding:10px 16px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:500;transition:all .15s}
+.btn-danger:hover{background:rgba(232,131,90,.2)}
+
+@media(max-width:680px){
+  .grid3,.grid2{grid-template-columns:1fr}
+  .ep-row{grid-template-columns:auto 1fr;grid-template-areas:"cb info" "fields fields"}
+  .ep-fields{grid-template-columns:1fr}
+  .ep-price{width:100%}
+  .custom-fields{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<script>if(localStorage.getItem('stjernekikkert_nightmode')==='1')document.body.classList.add('night-mode');</script>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">⭐ Stjernekikkert</a>
+    <a class="nav-link" href="index.html">Himmelen</a>
+    <a class="nav-link" href="objekter.html">Katalog</a>
+    <a class="nav-link active" href="setup.html">Oppsett</a>
+    <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <button class="nav-night" id="night-btn">🔴 Natt</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Sky-Watcher Dobson · 8&Prime;</div>
+    <h1>Ditt <em>oppsett</em></h1>
+    <p class="lede">Registrer kikkerten, posisjonen og okularene du har. Lagres automatisk og brukes på alle sidene.</p>
+  </header>
+
+  <!-- 1. Kikkert -->
+  <section class="panel">
+    <div class="panel-title"><span class="num">1</span> Kikkerten</div>
+    <div class="grid3">
+      <div>
+        <label class="fld" for="model">Modell</label>
+        <select id="model">
+          <option value="1000-150">Sky-Watcher 150 mm / 1000 mm (6&Prime;)</option>
+          <option value="1200-203" selected>Sky-Watcher 203 mm / 1200 mm (8&Prime;)</option>
+          <option value="1200-254">Sky-Watcher 254 mm / 1200 mm (10&Prime;)</option>
+          <option value="custom">Egendefinert …</option>
+        </select>
+      </div>
+      <div>
+        <label class="fld" for="aperture">Åpning (mm)</label>
+        <input type="number" id="aperture" value="203" min="30" step="1" inputmode="decimal">
+      </div>
+      <div>
+        <label class="fld" for="focal">Brennvidde (mm)</label>
+        <input type="number" id="focal" value="1200" min="100" step="10" inputmode="decimal">
+      </div>
+    </div>
+    <p class="hint">Åpningen samler lys; brennvidden bestemmer forstørrelsen.</p>
+  </section>
+
+  <!-- 2. Barlow -->
+  <section class="panel">
+    <div class="panel-title"><span class="num">2</span> Barlowlinse</div>
+    <div class="seg" id="barlow">
+      <button data-b="1" class="on"><span class="big">—</span>Ingen barlow</button>
+      <button data-b="2"><span class="big">2×</span>2× barlow</button>
+      <button data-b="3"><span class="big">3×</span>3× barlow</button>
+    </div>
+    <p class="hint">En barlow dobler okularsamlingen. Sett den mellom fokuser og okular.</p>
+  </section>
+
+  <!-- 3. Posisjon -->
+  <section class="panel">
+    <div class="panel-title"><span class="num">3</span> Posisjon</div>
+    <div class="grid2">
+      <div>
+        <label class="fld" for="lat">Breddegrad (°N)</label>
+        <input type="number" id="lat" value="59.91" step="0.01" min="-90" max="90" inputmode="decimal">
+      </div>
+      <div>
+        <label class="fld" for="lon">Lengdegrad (°Ø)</label>
+        <input type="number" id="lon" value="10.63" step="0.01" min="-180" max="180" inputmode="decimal">
+      </div>
+    </div>
+    <div class="loc-actions">
+      <button class="loc-btn" id="geo-btn">📍 Hent min posisjon</button>
+      <button class="loc-btn" id="save-home-btn">🏠 Lagre som hjemsted</button>
+    </div>
+    <div id="home-label" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-faint);margin-top:8px"></div>
+    <p class="hint">Brukes til å beregne hvilke objekter som er synlige og når de er oppe.</p>
+  </section>
+
+  <!-- 4. Himmelmørke (COND-2) -->
+  <section class="panel">
+    <div class="panel-title"><span class="num">4</span> Himmelmørke (valgfritt)</div>
+    <div class="grid2">
+      <div>
+        <label class="fld" for="bortle">Lysforurensning der du observerer</label>
+        <select id="bortle">
+          <option value="">Ikke satt</option>
+          <option value="2">Bortle 1–2 · Mørk landsbygd</option>
+          <option value="4">Bortle 3–4 · Landlig / utkant</option>
+          <option value="6">Bortle 5–6 · Forstad</option>
+          <option value="8">Bortle 7–9 · By</option>
+        </select>
+      </div>
+    </div>
+    <p class="hint">Brukes til å markere hvilke svake objekter (galakser, tåker) som er realistiske å se fra stedet ditt. Finn ditt nivå på <a href="https://www.lightpollutionmap.info" target="_blank" rel="noopener" style="color:var(--gold)">lightpollutionmap.info</a>.</p>
+  </section>
+
+  <!-- 5. Okularer -->
+  <section class="panel">
+    <div class="panel-title"><span class="num">5</span> Okularer</div>
+    <p class="hint" style="margin-bottom:18px">Huk av okularene du har. Fyll gjerne inn pris og lenke til nettbutikk for hvert okular.</p>
+    <div id="my-collection" style="margin-bottom:16px"></div>
+    <div id="ep-groups"></div>
+    <div id="custom-ep-list"></div>
+    <button class="add-custom-toggle" id="add-custom-toggle">+ Legg til egendefinert okular</button>
+    <div class="custom-form" id="custom-form" style="display:none">
+      <div class="custom-form-title">Nytt egendefinert okular</div>
+      <div class="custom-fields">
+        <div><label class="fld">Navn / modell</label><input type="text" id="cf-name" placeholder="F.eks. 9 mm Zoomex"></div>
+        <div><label class="fld">Brennvidde (mm)</label><input type="number" id="cf-fl" min="2" max="60" step="0.5" inputmode="decimal" placeholder="9"></div>
+        <div><label class="fld">Synsfelt AFOV (°)</label><input type="number" id="cf-afov" min="20" max="120" step="1" inputmode="decimal" placeholder="52"></div>
+        <div><label class="fld">Fatning</label><select id="cf-barrel"><option value="1.25">1.25"</option><option value="2">2"</option></select></div>
+      </div>
+      <div class="grid2">
+        <div><label class="fld">Pris (NOK)</label><input type="number" id="cf-price" min="0" step="10" inputmode="decimal" placeholder="Valgfritt"></div>
+        <div><label class="fld">Lenke (nettbutikk)</label><input type="url" id="cf-link" placeholder="https://..."></div>
+      </div>
+      <div class="custom-btn-row">
+        <button class="btn-primary" id="cf-add">Legg til</button>
+        <button class="btn-ghost" id="cf-cancel">Avbryt</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Data (DATA-1 + NIT-1) -->
+  <section class="panel">
+    <div class="panel-title"><span class="num">6</span> Sikkerhetskopi og nullstilling</div>
+    <p class="hint" style="margin-bottom:14px">Alt lagres kun i denne nettleseren. Eksporter en sikkerhetskopi før du bytter telefon eller tømmer nettleserdata.</p>
+    <div class="data-row">
+      <button class="btn-primary" id="export-btn">⬇ Eksporter (oppsett + logg)</button>
+      <button class="loc-btn" id="import-btn">⬆ Importer fra fil</button>
+      <button class="btn-danger" id="reset-btn">↺ Nullstill alt</button>
+    </div>
+    <input type="file" id="import-file" accept="application/json,.json" style="display:none">
+    <div id="data-msg" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-faint);margin-top:10px"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast">Lagret ✓</div>
+
+<script>
+(function(){
+  'use strict';
+  var MODELS = {'1000-150':{ap:150,fl:1000},'1200-203':{ap:203,fl:1200},'1200-254':{ap:254,fl:1200}};
+  var EP_GROUPS = [
+    {label:'Følger med kikkerten',           prefixes:['sw-'],     alwaysOpen:true},
+    {label:'SVBONY Goldline 66° — anbefalt',  prefixes:['sv-gl-']},
+    {label:'SVBONY 68° UWA',                  prefixes:['sv-68-']},
+    {label:'SVBONY Plössl 52°',               prefixes:['sv-pl-']},
+    {label:'SVBONY SV135 Zoom 7–21 mm',       prefixes:['sv-zoom-']},
+    {label:'SVBONY Aspheric',                 prefixes:['sv-asp-']},
+    {label:'SVBONY 2" bredvinkel',            prefixes:['sv-2-']},
+    {label:'BST StarGuider ED 60°',           prefixes:['bst-']},
+  ];
+
+  var setup = loadSetup();
+  var customCounter = 0;
+  Object.keys(setup.eyepieces).forEach(function(id){
+    if (id.indexOf('custom-') === 0) { var n = parseInt(id.replace('custom-',''),10); if (n >= customCounter) customCounter = n + 1; }
+  });
+
+  var modelSel = document.getElementById('model'), apInp = document.getElementById('aperture'), flInp = document.getElementById('focal');
+  modelSel.value = setup.telescope.model || '1200-203';
+  apInp.value = setup.telescope.ap; flInp.value = setup.telescope.fl;
+
+  document.querySelector('#barlow .on').classList.remove('on');
+  var bBtn = document.querySelector('#barlow [data-b="'+setup.barlow+'"]');
+  if (bBtn) bBtn.classList.add('on');
+
+  document.getElementById('lat').value = setup.location.lat;
+  document.getElementById('lon').value = setup.location.lon;
+  document.getElementById('bortle').value = (setup.bortle != null ? String(setup.bortle) : '');
+
+  var toastEl = document.getElementById('toast'), toastT;
+  function showToast(msg){ if(msg) toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.classList.remove('show'); }, 1800); }
+  function save(){ saveSetup(setup); showToast('Lagret ✓'); }
+
+  // Kikkert — BUG-2: oppdater samling ved endring
+  modelSel.addEventListener('change', function(){
+    var m = MODELS[this.value];
+    if (m){ apInp.value = m.ap; flInp.value = m.fl; setup.telescope.ap = m.ap; setup.telescope.fl = m.fl; }
+    setup.telescope.model = this.value; save(); renderMyCollection();
+  });
+  apInp.addEventListener('input', function(){ setup.telescope.ap = parseFloat(this.value)||203; modelSel.value='custom'; setup.telescope.model='custom'; save(); renderMyCollection(); });
+  flInp.addEventListener('input', function(){ setup.telescope.fl = parseFloat(this.value)||1200; modelSel.value='custom'; setup.telescope.model='custom'; save(); renderMyCollection(); });
+
+  // Barlow — BUG-2
+  document.querySelectorAll('#barlow button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('#barlow button').forEach(function(b){ b.classList.remove('on'); });
+      this.classList.add('on'); setup.barlow = +this.getAttribute('data-b'); save(); renderMyCollection();
+    });
+  });
+
+  // Posisjon
+  document.getElementById('lat').addEventListener('input', function(){ setup.location.lat = parseFloat(this.value)||59.91; save(); });
+  document.getElementById('lon').addEventListener('input', function(){ setup.location.lon = parseFloat(this.value)||10.63; save(); });
+  document.getElementById('geo-btn').addEventListener('click', function(){
+    if(!navigator.geolocation){ alert('Geolokasjon støttes ikke.'); return; }
+    navigator.geolocation.getCurrentPosition(function(p){
+      setup.location.lat = +p.coords.latitude.toFixed(4); setup.location.lon = +p.coords.longitude.toFixed(4);
+      document.getElementById('lat').value = setup.location.lat; document.getElementById('lon').value = setup.location.lon; save();
+    }, function(){ alert('Kunne ikke hente posisjon.'); });
+  });
+  document.getElementById('save-home-btn').addEventListener('click', function(){
+    setup.home = { lat: setup.location.lat, lon: setup.location.lon, name: 'Hjemme' }; save(); renderHomeLabel();
+  });
+  function renderHomeLabel(){
+    var lbl = document.getElementById('home-label');
+    lbl.textContent = (setup.home && setup.home.lat) ? ('🏠 Hjemsted lagret: '+setup.home.lat+'°N · '+setup.home.lon+'°Ø') : '';
+  }
+  renderHomeLabel();
+
+  // Bortle (COND-2)
+  document.getElementById('bortle').addEventListener('change', function(){
+    setup.bortle = this.value === '' ? null : parseInt(this.value,10); save();
+  });
+
+  // Min samling (SEC-1: htmlEscape + safeUrl)
+  function renderMyCollection(){
+    var box = document.getElementById('my-collection'), owned = getOwnedEyepieces(setup);
+    if (!owned.length){ box.innerHTML = ''; return; }
+    var tFl = setup.telescope.fl, barlow = setup.barlow;
+    var rows = owned.map(function(ep){
+      var mag = intc((tFl/ep.fl)*1), magB = barlow>1 ? ' · '+intc((tFl/ep.fl)*barlow)+'× m/barlow' : '';
+      var safe = safeUrl(ep.link);
+      var linkBtn = safe ? '<a href="'+htmlEscape(safe)+'" target="_blank" rel="noopener" style="color:var(--cyan);font-size:.78rem;margin-left:8px">↗</a>' : '';
+      var kindTag = ep.kind==='incl' ? '<span style="font-size:.68rem;font-family:\'JetBrains Mono\',monospace;background:rgba(111,216,224,.14);color:var(--cyan);padding:1px 6px;border-radius:99px;margin-left:6px">med</span>' : '';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)">'+
+        '<span style="font-size:1.1rem">🔭</span>'+
+        '<span style="flex:1;font-size:.92rem;color:var(--ink)">'+htmlEscape(ep.name)+kindTag+'</span>'+
+        '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.8rem;color:var(--cyan)">'+mag+'×'+magB+'</span>'+
+        (ep.price ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.76rem;color:var(--ink-faint)">'+htmlEscape(ep.price)+' kr</span>' : '')+
+        linkBtn+'</div>';
+    }).join('');
+    box.innerHTML =
+      '<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:10px">'+
+        '<span style="width:16px;height:1px;background:var(--gold);display:inline-block"></span>Din samling ('+owned.length+' okular'+(owned.length===1?'':'er')+')</div>'+
+      '<div style="background:rgba(111,216,224,.05);border:1px solid rgba(111,216,224,.18);border-radius:10px;padding:4px 14px">'+rows+'</div>';
+  }
+
+  function getEpState(id){ return setup.eyepieces[id] || {owned:false, price:'', link:''}; }
+  function setEpOwned(id, owned){ if(!setup.eyepieces[id]) setup.eyepieces[id]={owned:false,price:'',link:''}; setup.eyepieces[id].owned=owned; save(); renderMyCollection(); }
+  function setEpPrice(id, price){ if(!setup.eyepieces[id]) setup.eyepieces[id]={owned:false,price:'',link:''}; setup.eyepieces[id].price = price===''?null:+price; save(); renderMyCollection(); }
+  function setEpLink(id, link){ if(!setup.eyepieces[id]) setup.eyepieces[id]={owned:false,price:'',link:''}; setup.eyepieces[id].link=link; save(); }
+
+  // SEC-1: bygg rad med textContent/escaping i stedet for rå innfletting av brukerdata
+  function buildRow(preset){
+    var st = getEpState(preset.id);
+    var row = document.createElement('div');
+    row.className = 'ep-row' + (st.owned ? ' owned' : '');
+    var priceVal = (st.price!=null && st.price!=='') ? st.price : (preset.price || '');
+    var linkVal = st.link || '';
+    var metaStr = preset.brand + ' · ' + preset.barrel + '"' + (preset.afov ? ' · ' + preset.afov + '° AFOV' : '');
+    if (preset.note) metaStr += ' · ' + preset.note;
+    row.innerHTML =
+      '<div class="ep-cb"><input type="checkbox"'+(st.owned?' checked':'')+'></div>'+
+      '<div class="ep-info"><div class="ep-name"></div><div class="ep-meta"></div></div>'+
+      '<div class="ep-fields">'+
+        '<input type="number" class="ep-price" min="0" step="10" inputmode="decimal" placeholder="Pris (NOK)">'+
+        '<div class="ep-link-wrap"><input type="url" class="ep-link" placeholder="Lenke (nettbutikk)"><button type="button" class="link-open-btn" title="Åpne lenke">↗</button></div>'+
+      '</div>';
+    row.querySelector('.ep-name').textContent = preset.model;       // presets er trygge, men konsekvent
+    row.querySelector('.ep-meta').textContent = metaStr;
+    var priceI = row.querySelector('.ep-price'); priceI.value = priceVal;
+    var linkI = row.querySelector('.ep-link'); linkI.value = linkVal;
+    var openBtn = row.querySelector('.link-open-btn'); openBtn.disabled = !safeUrl(linkVal);
+
+    row.querySelector('input[type=checkbox]').addEventListener('change', function(){ row.classList.toggle('owned', this.checked); setEpOwned(preset.id, this.checked); });
+    priceI.addEventListener('input', function(){ setEpPrice(preset.id, this.value); });
+    linkI.addEventListener('input', function(){ var ok = safeUrl(this.value.trim()); openBtn.disabled = !ok; setEpLink(preset.id, this.value.trim()); });
+    openBtn.addEventListener('click', function(){ var ok = safeUrl(linkI.value.trim()); if (ok) window.open(ok, '_blank', 'noopener'); });
+    return row;
+  }
+
+  function renderGroups(){
+    var container = document.getElementById('ep-groups'); container.innerHTML = '';
+    EP_GROUPS.forEach(function(g){
+      var presets = EP_PRESETS.filter(function(p){ return g.prefixes.some(function(pre){ return p.id.indexOf(pre)===0; }); });
+      if (!presets.length) return;
+      var div = document.createElement('div'); div.className = 'ep-group' + (g.alwaysOpen ? ' always-open open' : '');
+      // A11Y-1: gruppeoverskrift som <button> med aria-expanded
+      var hd = document.createElement('button');
+      hd.type = 'button'; hd.className = 'ep-group-hd';
+      hd.textContent = g.label;
+      if (!g.alwaysOpen){
+        hd.setAttribute('aria-expanded','false');
+        var arrow = document.createElement('span'); arrow.className='toggle-arrow'; arrow.textContent='▶'; hd.appendChild(arrow);
+        hd.addEventListener('click', function(){ var open = div.classList.toggle('open'); hd.setAttribute('aria-expanded', open?'true':'false'); });
+      }
+      div.appendChild(hd);
+      var body = document.createElement('div'); body.className = 'ep-group-body';
+      presets.forEach(function(p){ body.appendChild(buildRow(p)); });
+      div.appendChild(body); container.appendChild(div);
+    });
+  }
+
+  // Egendefinerte okularer (SEC-1: escaping)
+  function renderCustomList(){
+    var list = document.getElementById('custom-ep-list'); list.innerHTML = '';
+    Object.keys(setup.eyepieces).filter(function(id){ return id.indexOf('custom-')===0; }).forEach(function(id){
+      var ep = setup.eyepieces[id]; if (!ep || !ep.fl) return;
+      var div = document.createElement('div'); div.className = 'custom-ep-item';
+      div.innerHTML =
+        '<input type="checkbox"'+(ep.owned?' checked':'')+' style="width:18px;height:18px;accent-color:var(--cyan);cursor:pointer">'+
+        '<div class="ep-info" style="flex:1"><div class="ep-name"></div><div class="ep-meta"></div></div>'+
+        '<button class="del-btn" title="Fjern">✕</button>';
+      div.querySelector('.ep-name').textContent = ep.name || (ep.fl+' mm');
+      div.querySelector('.ep-meta').textContent = 'Egendefinert · '+ep.fl+' mm · '+ep.barrel+'" · '+(ep.afov||52)+'° AFOV'+(ep.price?' · '+ep.price+' NOK':'');
+      // BUG-1: oppdater samling ved av/på
+      div.querySelector('input[type=checkbox]').addEventListener('change', function(){ setup.eyepieces[id].owned = this.checked; save(); renderMyCollection(); });
+      div.querySelector('.del-btn').addEventListener('click', function(){ delete setup.eyepieces[id]; save(); renderCustomList(); renderMyCollection(); });
+      list.appendChild(div);
+    });
+  }
+
+  var customFormVisible = false;
+  document.getElementById('add-custom-toggle').addEventListener('click', function(){ customFormVisible = !customFormVisible; document.getElementById('custom-form').style.display = customFormVisible ? '' : 'none'; });
+  document.getElementById('cf-cancel').addEventListener('click', function(){ customFormVisible = false; document.getElementById('custom-form').style.display = 'none'; });
+  document.getElementById('cf-add').addEventListener('click', function(){
+    var name = document.getElementById('cf-name').value.trim();
+    var fl = parseFloat(document.getElementById('cf-fl').value);
+    var afov = parseFloat(document.getElementById('cf-afov').value) || 52;
+    var barrel = parseFloat(document.getElementById('cf-barrel').value) || 1.25;
+    var price = document.getElementById('cf-price').value;
+    var link = safeUrl(document.getElementById('cf-link').value.trim());  // SEC-1: valider lenke
+    if (!fl || fl <= 0){ alert('Skriv inn brennvidde.'); return; }
+    var id = 'custom-' + customCounter++;
+    setup.eyepieces[id] = { owned:true, fl:fl, afov:afov, barrel:barrel, name:name || (fl+' mm'), price: price?+price:null, link: link };
+    save();
+    renderCustomList();
+    renderMyCollection();   // BUG-1: vis det nye okularet i samlingen umiddelbart
+    ['cf-name','cf-fl','cf-afov','cf-price','cf-link'].forEach(function(i){ document.getElementById(i).value=''; });
+    document.getElementById('cf-barrel').value = '1.25';
+    customFormVisible = false; document.getElementById('custom-form').style.display = 'none';
+  });
+
+  // ---- DATA-1: eksport / import ----
+  document.getElementById('export-btn').addEventListener('click', function(){
+    var payload = { app:'stjernekikkert', version:1, exported: new Date().toISOString(), setup: setup, log: loadLog() };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = 'stjernekikkert-backup-'+todayISO()+'.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    document.getElementById('data-msg').textContent = 'Sikkerhetskopi lastet ned.';
+  });
+  document.getElementById('import-btn').addEventListener('click', function(){ document.getElementById('import-file').click(); });
+  document.getElementById('import-file').addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        var data = JSON.parse(reader.result);
+        var newSetup = data.setup || data;   // tål både innpakket og rå setup
+        if (!newSetup || !newSetup.telescope || !newSetup.eyepieces) throw new Error('Mangler oppsett-felt.');
+        if (!confirm('Dette overskriver ditt nåværende oppsett og logg. Fortsette?')) { e.target.value=''; return; }
+        saveSetup(newSetup);
+        if (data.log) saveLog(data.log);
+        document.getElementById('data-msg').textContent = 'Importert. Laster siden på nytt …';
+        setTimeout(function(){ location.reload(); }, 700);
+      } catch(err) {
+        document.getElementById('data-msg').textContent = 'Kunne ikke lese filen: ' + err.message;
+      }
+      e.target.value='';
+    };
+    reader.readAsText(file);
+  });
+
+  // ---- NIT-1: nullstill ----
+  document.getElementById('reset-btn').addEventListener('click', function(){
+    if (!confirm('Nullstille alt oppsett og observasjonslogg til standard? Dette kan ikke angres.')) return;
+    try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(LOG_KEY); } catch(e){}
+    document.getElementById('data-msg').textContent = 'Nullstilt. Laster siden på nytt …';
+    setTimeout(function(){ location.reload(); }, 600);
+  });
+
+  // ---- Init ----
+  renderGroups();
+  renderCustomList();
+  renderMyCollection();
+  initNightMode();
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+</body>
+</html>
