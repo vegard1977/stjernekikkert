@@ -1182,7 +1182,7 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
     if (aBtn){ openFinderModal(aBtn.getAttribute('data-finder'), parseFloat(aBtn.getAttribute('data-ra')), parseFloat(aBtn.getAttribute('data-dec'))); return; }
     var aimBtn = e.target.closest && e.target.closest('.aim-btn');
     if (aimBtn){
-      var tg = { name: aimBtn.getAttribute('data-name'), ra: parseFloat(aimBtn.getAttribute('data-ra')), dec: parseFloat(aimBtn.getAttribute('data-dec')) };
+      var tg = { id: aimBtn.getAttribute('data-aim'), name: aimBtn.getAttribute('data-name'), ra: parseFloat(aimBtn.getAttribute('data-ra')), dec: parseFloat(aimBtn.getAttribute('data-dec')) };
       try { localStorage.setItem('stjernekikkert_aim_target', JSON.stringify(tg)); } catch(err){}
       window.location.href = 'sikt.html';
     }

@@ -70,6 +70,11 @@
 .cal-pt-del{background:none;border:1px solid var(--line-strong);color:var(--ink-faint);width:28px;height:28px;border-radius:6px;cursor:pointer;flex:none;transition:all .15s}
 .cal-pt-del:hover{border-color:var(--rust);color:var(--rust)}
 
+.aim-chart{background:var(--panel-soft);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:4px;text-align:center}
+.aim-chart-hd{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px}
+.aim-chart svg{width:100%;height:auto;max-width:300px;max-height:60vh;display:block;margin:0 auto;border-radius:10px}
+.aim-chart-note{font-size:.76rem;color:var(--ink-faint);margin-top:10px;line-height:1.4}
+
 .muted{color:var(--ink-faint)}
 .hidden{display:none}
 .step-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bg);background:var(--gold);border-radius:99px;padding:2px 10px;margin-bottom:10px}
@@ -122,6 +127,7 @@
     </div>
     <button class="big-btn gold" id="aim-calibrate">🎯 Kalibrer på dette objektet</button>
     <button class="big-btn" id="clear-target">Velg annet mål</button>
+    <div id="aim-chart" class="aim-chart"></div>
   </section>
 
   <!-- Målvalg (når ingen mål) -->
@@ -235,12 +241,36 @@
     }).join('');
   }
 
+  // Kobling fra kalibreringsstjerne (ALIGN_STARS) til stjernebilde + nabostjerne for pil
+  var STAR_CON = {
+    vega:{con:'lyr',from:'Sheliak'}, deneb:{con:'cyg',from:'Sadr'}, altair:{con:'aql',from:'Tarazed'},
+    arcturus:{con:'cvn',from:'Cor Caroli'}, capella:{con:'aur',from:'Menkalinan'},
+    betelgeuse:{con:'ori',from:'Bellatrix'}, rigel:{con:'ori',from:'Alnitak'},
+    sirius:{con:'cma',from:'Mirzam'}, pollux:{con:'gem',from:'Castor'},
+    dubhe:{con:'uma',from:'Merak'}, schedar:{con:'cas',from:'Caph'},
+    aldebaran:{con:'tau',from:'Elnath'}, regulus:{con:'leo',from:'Algieba'}
+  };
   // ---- Sett mål ----
   function setTarget(t){
     target = t;
     document.getElementById('pick-panel').classList.add('hidden');
     document.getElementById('aim-panel').classList.remove('hidden');
     document.getElementById('aim-target').textContent = '🎯 ' + t.name;
+    renderAimChart(t);
+  }
+  function renderAimChart(t){
+    var box = document.getElementById('aim-chart');
+    var svg;
+    // 1) objekt med eget stjernebilde-kart (M-objekter), 2) kalibreringsstjerne→stjernebilde, 3) generisk
+    if (t.id && typeof OBJECT_FINDERS !== 'undefined' && OBJECT_FINDERS[t.id]){
+      svg = buildFinder(t.id, t.ra, t.dec, t.name);
+    } else if (t.id && STAR_CON[t.id]){
+      svg = buildConstellationFinder(t.ra, t.dec, t.name, STAR_CON[t.id]);
+    } else {
+      svg = buildFinderChart(t.ra, t.dec, t.name);
+    }
+    box.innerHTML = '<div class="aim-chart-hd">Stjernebilde</div>'+svg+
+      '<div class="aim-chart-note">Nord opp, øst venstre. Gullsiktet er målet.</div>';
   }
   function clearTarget(){
     target = null;
@@ -252,7 +282,7 @@
   document.getElementById('quick-targets').addEventListener('click', function(e){
     var b = e.target.closest('.star-opt'); if(!b) return;
     var s = alignStarById(b.getAttribute('data-star'));
-    if (s) setTarget({name:s.name, ra:s.ra, dec:s.dec});
+    if (s) setTarget({id:s.id, name:s.name, ra:s.ra, dec:s.dec});
   });
 
   // Felles fangst: legg til et kalibreringspunkt for en kjent retning og bygg kalibrering.

@@ -250,7 +250,7 @@
     if (a){ openFinderModal(a.getAttribute('data-finder'), parseFloat(a.getAttribute('data-ra')), parseFloat(a.getAttribute('data-dec'))); return; }
     var aim = e.target.closest('.aim-btn');
     if (aim){
-      var tg = { name: aim.getAttribute('data-name'), ra: parseFloat(aim.getAttribute('data-ra')), dec: parseFloat(aim.getAttribute('data-dec')) };
+      var tg = { id: aim.getAttribute('data-aim'), name: aim.getAttribute('data-name'), ra: parseFloat(aim.getAttribute('data-ra')), dec: parseFloat(aim.getAttribute('data-dec')) };
       try { localStorage.setItem('stjernekikkert_aim_target', JSON.stringify(tg)); } catch(err){}
       window.location.href = 'sikt.html';
     }
