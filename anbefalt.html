@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anbefalt — Stjernekikkert</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>%E2%AD%90</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080b18">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<script src="shared.js"></script>
+<style>
+.rec-intro{background:rgba(240,196,106,.07);border:1px solid rgba(240,196,106,.25);border-radius:12px;padding:14px 18px;margin-bottom:22px;font-size:.9rem;color:var(--ink-soft);line-height:1.55}
+.rec-intro b{color:var(--gold)}
+.rec-sec{margin-bottom:14px}
+.rec-sec-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:10px;margin:24px 0 14px}
+.rec-sec-title::before{content:"";width:18px;height:1px;background:var(--gold);flex:none}
+.rec-card{display:flex;align-items:center;gap:14px;background:var(--panel-soft);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:9px;border-left-width:3px;cursor:pointer;transition:border-color .15s,transform .1s}
+.rec-card:hover{border-color:var(--gold)}
+.rec-card:active{transform:scale(.995)}
+.rec-rank{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--ink-faint);flex:none;width:26px;text-align:center}
+.rec-emo{font-size:1.6rem;flex:none}
+.rec-body{flex:1;min-width:0}
+.rec-name{font-family:'Fraunces',serif;font-size:1.04rem;font-weight:600;color:var(--ink)}
+.rec-why{font-size:.8rem;color:var(--ink-soft);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-meta{flex:none;text-align:right;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-faint);line-height:1.5}
+.rec-v{font-weight:700}
+.rec-v.v-great{color:var(--green)}.rec-v.v-good{color:var(--cyan)}.rec-v.v-ok{color:var(--gold)}
+.rec-card.v-great{border-left-color:var(--green)}.rec-card.v-good{border-left-color:var(--cyan)}.rec-card.v-ok{border-left-color:var(--gold)}
+.rec-empty{color:var(--ink-soft);font-size:.9rem;line-height:1.6;padding:10px 0;font-style:italic}
+.rec-loading{color:var(--ink-faint);font-style:italic;padding:14px 0}
+</style>
+</head>
+<body>
+<script>if(localStorage.getItem('stjernekikkert_nightmode')==='1')document.body.classList.add('night-mode');</script>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">⭐ Stjernekikkert</a>
+    <a class="nav-link" href="index.html">Himmelen</a>
+    <a class="nav-link" href="objekter.html">Katalog</a>
+    <a class="nav-link active" href="anbefalt.html">Anbefalt</a>
+    <a class="nav-link" href="setup.html">Oppsett</a>
+    <a class="nav-link" href="kollimering.html">Kollimering</a>
+    <a class="nav-link" href="sikt.html">Sikt</a>
+    <button class="nav-install" id="install-btn" style="display:none">⬇ Installer</button>
+    <button class="nav-night" id="night-btn">🔴 Natt</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Hva er verdt å se akkurat nå</div>
+    <h1>Anbefalt <em>nå</em></h1>
+    <p class="lede">De best plasserte objektene de neste 14 nettene fra din posisjon — rangert etter høyde på himmelen og hvor mørkt det rekker å bli.</p>
+  </header>
+
+  <div class="rec-intro">
+    Lista regnes ut for <b id="rec-loc">din posisjon</b> og oppdateres med dato. Trykk på et objekt for å se hvilke netter som er best. <b>Måne og planeter</b> er alltid lyssterke og vises for seg; <b>dypromobjektene</b> rangeres etter hvor godt de kommer fram i mørket.
+  </div>
+
+  <div id="rec-content"><div class="rec-loading">Regner ut beste objekter …</div></div>
+
+  <footer>Skydekke er ikke medregnet — sjekk været før du drar ut. God kikking! ✦</footer>
+</div>
+
+<!-- Forecast-modal (gjenbruk fra katalogen) -->
+<div id="fc-modal" class="finder-modal" aria-hidden="true">
+  <div class="fm-bg" id="fc-close-bg"></div>
+  <div class="fm-box" role="dialog" aria-modal="true" aria-labelledby="fc-title">
+    <div class="fm-title" id="fc-title"></div>
+    <div class="fc-body" id="fc-body"></div>
+    <div class="fm-note">Vurdert ut fra hvor høyt objektet står og hvor mørk himmelen må være for nettopp <b>dette</b> objektet. Skydekke er <b>ikke</b> medregnet.</div>
+    <button class="fm-close" id="fc-close-btn">Lukk</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var setup = loadSetup();
+  var lat = setup.location.lat, lon = setup.location.lon;
+  document.getElementById('rec-loc').textContent = lat.toFixed(2)+'°N, '+lon.toFixed(2)+'°Ø';
+
+  var MND = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+  var DAG = ['søn','man','tir','ons','tor','fre','lør'];
+  function dateLabel(iso){ var d=new Date(iso+'T12:00:00'); return DAG[d.getDay()]+' '+d.getDate()+'. '+MND[d.getMonth()]; }
+  function vClass(v){ return v==='Utmerket'?'v-great':v==='Bra'?'v-good':'v-ok'; }
+
+  // bygg objektlister (samme kilder som katalogen)
+  var MOON_LIST = MOONS.map(function(m){
+    var pn = m.parent ? (PLANETS_2026.filter(function(p){return p.id===m.parent;})[0]||{}).name : null;
+    return {id:m.id,emo:m.emo,name:m.name,type:'moon',ra:m.ra||0,dec:m.dec||0,mag:m.mag,why:m.why,parent:m.parent,parentName:pn};
+  });
+  var PLANET_LIST = PLANETS_2026.map(function(p){
+    return {id:p.id,emo:p.emo,name:p.name,type:'planet',ra:0,dec:0,mag:p.mag,why:p.why};
+  });
+  function resolver(o){
+    if (o.type==='planet') return function(t){ return planetPos(o.id,t); };
+    if (o.id==='luna') return function(t){ return moonPos(t); };
+    if (o.parent) return function(t){ return planetPos(o.parent,t); };
+    return null;
+  }
+
+  function cardHtml(x, rank){
+    var o = x.o, n = x.bestNight;
+    return '<div class="rec-card '+vClass(x.verdict)+'" data-id="'+o.id+'" data-type="'+o.type+'">'+
+      '<div class="rec-rank">'+rank+'</div>'+
+      '<div class="rec-emo">'+o.emo+'</div>'+
+      '<div class="rec-body"><div class="rec-name">'+htmlEscape(o.name)+'</div>'+
+        '<div class="rec-why">'+htmlEscape(o.why||'')+'</div></div>'+
+      '<div class="rec-meta"><span class="rec-v '+vClass(x.verdict)+'">'+x.verdict+'</span><br>'+
+        dateLabel(x.bestDate)+'<br>'+(n.best?(fmtTime(n.best.time)+' · '+n.best.alt+'°'):'')+'</div>'+
+      '</div>';
+  }
+
+  function render(){
+    var now = new Date();
+    // dyprom
+    var dso = rankObjects(SKY_CATALOG.slice(), lat, lon, now, 14, null).slice(0, 10);
+    // sol-system (måne + planeter)
+    var sol = rankObjects(MOON_LIST.concat(PLANET_LIST), lat, lon, now, 14, resolver).slice(0, 10);
+
+    var html = '';
+    html += '<div class="rec-sec-title">🌙 Måne &amp; planeter</div>';
+    if (sol.length){
+      html += sol.map(function(x,i){ return cardHtml(x, i+1); }).join('');
+    } else {
+      html += '<div class="rec-empty">Ingen planeter godt plassert akkurat nå.</div>';
+    }
+
+    html += '<div class="rec-sec-title">✨ Dypromobjekter — topp 10</div>';
+    if (dso.length){
+      html += dso.map(function(x,i){ return cardHtml(x, i+1); }).join('');
+    } else {
+      html += '<div class="rec-empty">Ingen dypromobjekter kommer godt fram de neste 14 nettene — lyse netter nå. Prøv igjen utover høsten, da fylles lista opp.</div>';
+    }
+    document.getElementById('rec-content').innerHTML = html;
+  }
+
+  // ---- klikk → forecast-modal ----
+  var fcModal = document.getElementById('fc-modal'), fcLastFocus = null;
+  function objById(id){ return MOON_LIST.concat(PLANET_LIST).concat(SKY_CATALOG).filter(function(o){return o.id===id;})[0]; }
+  function openForecastModal(o){
+    var posFn = resolver(o), note = '';
+    if (o.type==='moon' && o.parent) note = 'Følger '+htmlEscape(o.parentName||'planeten')+' på himmelen.';
+    var nights = bestViewingNights(o.ra, o.dec, lat, lon, new Date(), 30, {mag:o.mag, posFn:posFn});
+    document.getElementById('fc-title').innerHTML = '📅 '+htmlEscape(o.name)+' — neste 30 netter';
+    var visible = nights.filter(function(n){ return n.best; });
+    var html = '';
+    if (note) html += '<div class="fc-pnote">'+note+'</div>';
+    if (!visible.length){
+      html += '<div class="fc-empty">Ikke godt plassert de neste 30 nettene herfra.</div>';
+    } else {
+      var ranked = visible.slice().sort(function(a,b){ return b.score-a.score; }).slice(0,3);
+      html += '<div class="fc-top">'+ranked.map(function(n){
+        return '<div class="fc-top-card '+vClass(n.verdict)+'"><div class="fc-top-date">'+dateLabel(n.date)+'</div>'+
+          '<div class="fc-top-v">'+n.verdict+'</div><div class="fc-top-det">'+fmtTime(n.best.time)+' · '+n.best.alt+'° opp · 🌙 '+n.moonIllum+'%</div></div>';
+      }).join('')+'</div><div class="fc-sub">Alle synlige netter:</div><div class="fc-list">'+
+      visible.map(function(n){ var w=Math.max(4,n.score);
+        return '<div class="fc-row"><div class="fc-row-d">'+dateLabel(n.date)+'</div>'+
+          '<div class="fc-row-bar"><span class="'+vClass(n.verdict)+'" style="width:'+w+'%"></span></div>'+
+          '<div class="fc-row-info">'+fmtTime(n.best.time)+' · '+n.best.alt+'°</div></div>';
+      }).join('')+'</div>';
+    }
+    document.getElementById('fc-body').innerHTML = html;
+    fcLastFocus = document.activeElement;
+    fcModal.classList.add('show'); fcModal.setAttribute('aria-hidden','false');
+    document.getElementById('fc-close-btn').focus();
+  }
+  function closeForecastModal(){ fcModal.classList.remove('show'); fcModal.setAttribute('aria-hidden','true'); if(fcLastFocus&&fcLastFocus.focus)fcLastFocus.focus(); }
+  document.getElementById('rec-content').addEventListener('click', function(e){
+    var c = e.target.closest('.rec-card'); if(!c) return;
+    var o = objById(c.getAttribute('data-id')); if(o) openForecastModal(o);
+  });
+  document.getElementById('fc-close-btn').addEventListener('click', closeForecastModal);
+  document.getElementById('fc-close-bg').addEventListener('click', closeForecastModal);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&fcModal.classList.contains('show')) closeForecastModal(); });
+
+  render();
+  initNightMode();
+  initInstall();
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
+</body>
+</html>

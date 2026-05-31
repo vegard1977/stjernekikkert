@@ -906,55 +906,112 @@ function riseSet(raH, decDeg, date, latDeg, lonDeg, minAlt) {
 }
 
 // ---- Observasjonsutsikt fremover (punkt 2) ----
-// For hver natt de neste nDays dagene: finn tidspunktet i nattens MØRKE timer
-// (sol under darkSun°, standard -12 = nautisk) der objektet står høyest.
-// Returnerer en liste {date(ISO), best:{time,alt,sunAlt} | null, darkAvail, moonIllum, score, verdict}.
-// score 0..100 vekter høyde (mest) + mørke + lite måneskinn for svake objekter.
+// Edruelig modell: et objekt er SYNLIG når det er høyt nok OG himmelen er mørk
+// nok for objektets lysstyrke. Lyse objekter (Måne, planeter) ses i skumring og
+// til og med dagslys; svake dypromobjekter krever ekte mørke. Vi dømmer ikke alt
+// som umulig om sommeren — vi vurderer hver natt på sitt beste tidspunkt.
+//
+// "Mørkekrav": hvor lavt sola må stå for at objektet skal kunne sees.
+//   Tilnærming basert på magnitude (grov, men ærlig):
+//     mag <= -3  (Måne, Venus): ses i dagslys      -> krever sol < +10°
+//     mag <= -1  (Jupiter):     ses i lys skumring  -> sol < -3°
+//     mag <=  1  (Mars/Saturn, lyse stjerner):      -> sol < -6°  (borgerlig)
+//     mag <=  4  (lyse DSO, Galilei-måner):          -> sol < -9°
+//     mag <=  6  (middels DSO):                      -> sol < -12° (nautisk)
+//     mag  >  6  (svake DSO):                        -> sol < -15° (nær astronomisk)
+function sunDarkReqForMag(mag){
+  if (mag == null) mag = 6;
+  if (mag <= -6) return 90;   // Månen: synlig når som helst den er oppe, også høylys dag
+  if (mag <= -3) return 15;   // Venus: synlig i dagslys
+  if (mag <= -1) return 0;    // Jupiter: fra solnedgang
+  if (mag <= 1)  return -4;   // Mars/Saturn, lyse stjerner: tidlig skumring
+  if (mag <= 4)  return -8;   // lyse DSO, Galilei-måner: borgerlig/nautisk
+  if (mag <= 6)  return -11;  // middels DSO: nautisk
+  return -14;                 // svake DSO: nær astronomisk mørke
+}
 function bestViewingNights(raH, decDeg, lat, lon, fromDate, nDays, opts) {
   opts = opts || {};
-  var darkSun = opts.darkSun != null ? opts.darkSun : -12;  // mørkegrense for sol
-  var faint = !!opts.faint;                                  // svakt objekt → straff for måneskinn
-  var posFn = opts.posFn || null;     // valgfri: funksjon(date)->{ra,dec} for objekter som flytter seg (planeter/måne)
+  var posFn = opts.posFn || null;          // funksjon(date)->{ra,dec} for objekter i bevegelse
+  var mag = (opts.mag != null) ? opts.mag : 6;
+  var faint = (opts.faint != null) ? opts.faint : (mag > 6);  // svake DSO straffes av måneskinn
+  var minAlt = opts.minAlt != null ? opts.minAlt : 8;         // under dette: for lavt for Dobson
+  var sunReq = sunDarkReqForMag(mag);                          // solhøyde som kreves for synlighet
   nDays = nDays || 30;
   var out = [];
   for (var day = 0; day < nDays; day++) {
     var base = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + day, 12, 0, 0, 0); // middag
-    var best = null, darkMin = 0;
-    // sampler middag→middag i 15-min steg; tell mørke minutter og finn objektets maks i mørke
+    // Finn tidspunktet der objektet står høyest MENS det er synlig (sol mørk nok for mag),
+    // og det høyeste det når i det hele tatt over horisonten (for "for lavt"-vurdering).
+    var best = null, peakAnytime = -90, darkEnoughMin = 0, peakWhenDark = -90, darkExists = false;
     for (var m = 0; m <= 1440; m += 15) {
       var t = new Date(base.getTime() + m * 60000);
       var sa = altAz(sunPos(t).ra, sunPos(t).dec, t, lat, lon).alt;
-      if (sa <= darkSun) {
-        darkMin += 15;
-        var pr = posFn ? posFn(t) : {ra:raH, dec:decDeg};
-        var oa = altAz(pr.ra, pr.dec, t, lat, lon).alt;
-        if (oa > 0 && (!best || oa > best.alt)) best = { time: t, alt: oa, sunAlt: sa };
+      var pr = posFn ? posFn(t) : {ra:raH, dec:decDeg};
+      var oa = altAz(pr.ra, pr.dec, t, lat, lon).alt;
+      if (oa > peakAnytime) peakAnytime = oa;
+      var darkEnough = (sa <= sunReq);
+      if (darkEnough){ darkExists = true; if (oa > peakWhenDark) peakWhenDark = oa; }
+      var visibleNow = darkEnough && (oa >= minAlt);
+      if (visibleNow){
+        darkEnoughMin += 15;
+        if (!best || oa > best.alt){ best = { time: t, alt: oa, sunAlt: sa }; }
       }
     }
     var mph = moonPhase(base);
-    var moonIllum = mph.illum != null ? mph.illum : Math.round(mph.k * 100);
-    // score
-    var score = 0, verdict = 'Ikke synlig i mørke';
-    if (best) {
-      var altScore = Math.max(0, Math.min(1, best.alt / 60));            // 60°+ = full
-      var darkScore = Math.max(0, Math.min(1, darkMin / 240));            // 4t+ mørke = full
-      var moonPenalty = faint ? (moonIllum / 100) * 0.35 : 0;             // svake objekter lider av måneskinn
-      score = Math.round(Math.max(0, (0.6 * altScore + 0.4 * darkScore - moonPenalty)) * 100);
-      if (score >= 70) verdict = 'Utmerket';
-      else if (score >= 45) verdict = 'Bra';
-      else if (score >= 20) verdict = 'Mulig';
-      else verdict = 'Vanskelig';
-    } else if (darkMin === 0) {
-      verdict = 'Lyse netter';
+    var moonIllum = mph.illum != null ? mph.illum : Math.round((mph.k != null ? mph.k : 0) * 100);
+
+    var score = 0, verdict;
+    if (best){
+      // kvalitet: høyde (hvor godt plassert) + hvor god mørkemargin + lite måneskinn for svake
+      var altScore = Math.max(0, Math.min(1, (best.alt - minAlt) / (55 - minAlt)));   // minAlt..55°
+      // mørkemargin: hvor mye mørkere enn kravet (0 = akkurat synlig, 1 = godt mørkt)
+      var margin = (sunReq - best.sunAlt) / 8;                 // hver 8° ekstra mørke = +1 trinn
+      var darkScore = Math.max(0, Math.min(1, margin));
+      var moonPenalty = faint ? (moonIllum / 100) * 0.25 : 0;
+      // grunnpoeng (objektet ER synlig) + høyde + mørke − måneskinn
+      score = Math.round(Math.max(0, Math.min(1, 0.25 + 0.45*altScore + 0.30*darkScore - moonPenalty)) * 100);
+      if (score >= 72) verdict = 'Utmerket';
+      else if (score >= 50) verdict = 'Bra';
+      else verdict = 'Mulig';
+    } else if (!darkExists){
+      // himmelen blir aldri mørk nok for dette objektet (lyse netter, svakt objekt)
+      verdict = 'For lyse netter';
+    } else if (peakWhenDark < minAlt){
+      // mørke finnes, men objektet er under horisonten/for lavt akkurat da
+      verdict = (peakAnytime >= minAlt) ? 'Nede når det er mørkt' : 'For lavt på himmelen';
+    } else {
+      verdict = 'For lavt på himmelen';
     }
     var yyyy = base.getFullYear(), mm = ('0'+(base.getMonth()+1)).slice(-2), dd = ('0'+base.getDate()).slice(-2);
     out.push({
       date: yyyy+'-'+mm+'-'+dd,
       best: best ? { time: best.time, alt: Math.round(best.alt), sunAlt: Math.round(best.sunAlt) } : null,
-      darkMinutes: darkMin, moonIllum: moonIllum, score: score, verdict: verdict
+      peakAlt: Math.round(peakAnytime),
+      darkMinutes: darkEnoughMin, moonIllum: moonIllum, score: score, verdict: verdict
     });
   }
   return out;
+}
+
+// Ranger en liste objekter etter beste natt de neste nDays dagene.
+// objs: [{id,name,emo,type,ra,dec,mag,parent,...}], posResolver(o) -> posFn|null.
+// Returnerer sortert (best først) med {o, bestNight, bestDate, score, verdict}.
+function rankObjects(objs, lat, lon, fromDate, nDays, posResolver){
+  var ranked = [];
+  for (var i = 0; i < objs.length; i++){
+    var o = objs[i];
+    var posFn = posResolver ? posResolver(o) : null;
+    var nights = bestViewingNights(o.ra, o.dec, lat, lon, fromDate, nDays, {mag:o.mag, posFn:posFn});
+    var top = null;
+    for (var j = 0; j < nights.length; j++){
+      if (nights[j].best && (!top || nights[j].score > top.score)) top = nights[j];
+    }
+    if (top){
+      ranked.push({ o:o, bestNight:top, bestDate:top.date, score:top.score, verdict:top.verdict });
+    }
+  }
+  ranked.sort(function(a,b){ return b.score - a.score; });
+  return ranked;
 }
 
 function compassSimple(az) {

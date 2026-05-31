@@ -143,7 +143,7 @@
   <div class="fm-box" role="dialog" aria-modal="true" aria-labelledby="fc-title">
     <div class="fm-title" id="fc-title"></div>
     <div class="fc-body" id="fc-body"></div>
-    <div class="fm-note">Vurdert ut fra objektets høyde over horisonten og hvor mørkt det er (sol under −12°). Måneskinn teller med for svake objekter. Skydekke er <b>ikke</b> medregnet — sjekk været separat.</div>
+    <div class="fm-note">Vurdert ut fra hvor høyt objektet står og hvor mørk himmelen må være for nettopp <b>dette</b> objektet (lyse objekter som Måne og planeter ses i skumring; svake objekter krever mørke). Skydekke er <b>ikke</b> medregnet — sjekk været separat.</div>
     <button class="fm-close" id="fc-close-btn">Lukk</button>
   </div>
 </div>
@@ -347,26 +347,29 @@
   }
   function openForecastModal(o){
     var name = o.name, type = o.type;
-    var faint = (type==='galaxy' || type==='nebula');
     var posFn = null, raH = o.ra, decDeg = o.dec, note = '';
     if (type==='planet'){
       posFn = function(t){ return planetPos(o.id, t); };
     } else if (type==='moon' && o.id==='luna'){
       posFn = function(t){ return moonPos(t); };
     } else if (type==='moon' && o.parent){
-      // Jupiter/Saturn-måne: følger planeten på himmelen
       posFn = function(t){ return planetPos(o.parent, t); };
       note = 'Følger '+htmlEscape(o.parentName||'planeten')+' på himmelen.';
     }
-    var nights = bestViewingNights(raH, decDeg, setup.location.lat, setup.location.lon, new Date(), 30, {faint:faint, posFn:posFn});
+    var nights = bestViewingNights(raH, decDeg, setup.location.lat, setup.location.lon, new Date(), 30, {mag:o.mag, posFn:posFn});
     document.getElementById('fc-title').innerHTML = '📅 '+htmlEscape(name)+' — neste 30 netter';
 
     var visible = nights.filter(function(n){ return n.best; });
     var html = '';
     if (note) html += '<div class="fc-pnote">'+note+'</div>';
     if (!visible.length){
-      var lyse = nights.filter(function(n){ return n.verdict==='Lyse netter'; }).length;
-      html += '<div class="fc-empty">'+(lyse? 'For lyst om natta de neste ukene (lyse netter / midnattssol-sesong). Prøv igjen utover høsten.' : 'Objektet kommer ikke høyt nok over horisonten herfra de neste 30 nettene.')+'</div>';
+      var allLow = nights.every(function(n){ return n.verdict==='For lavt på himmelen'; });
+      var allDown = nights.every(function(n){ return n.verdict==='Nede når det er mørkt' || n.verdict==='For lavt på himmelen'; });
+      var msg;
+      if (allLow) msg = 'Kommer ikke høyt nok over horisonten herfra de neste 30 nettene (under ca. 8°).';
+      else if (allDown) msg = 'Objektet står under horisonten når himmelen er mørk nok de neste 30 nettene — det er på «feil side» av døgnet i denne sesongen. Kommer tilbake senere på året.';
+      else msg = 'Himmelen blir ikke mørk nok for dette objektet de neste 30 nettene (lyse netter). Lyse objekter som Måne og planeter går fint nå — svakere objekter kommer tilbake utover høsten.';
+      html += '<div class="fc-empty">'+msg+'</div>';
     } else {
       var ranked = visible.slice().sort(function(a,b){ return b.score - a.score; }).slice(0,3);
       html += '<div class="fc-top">';

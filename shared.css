@@ -190,3 +190,30 @@ body.night-mode::before{
     radial-gradient(1px 1px at 8% 88%,#ff3311 50%,transparent);
   opacity:.3;
 }
+
+/* Observasjonsutsikt-modal (delt mellom Katalog og Anbefalt) */
+.fc-pnote{font-size:.82rem;color:var(--ink-soft);background:rgba(111,216,224,.07);border:1px solid rgba(111,216,224,.25);border-radius:8px;padding:8px 12px;margin-bottom:12px}
+.fc-body{margin:4px 0 14px}
+.fc-empty{color:var(--ink-soft);font-size:.92rem;line-height:1.6;padding:8px 0}
+.fc-top{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:16px}
+.fc-top-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel-soft);border-left-width:3px}
+.fc-top-date{font-family:'Fraunces',serif;font-size:1.02rem;font-weight:600;color:var(--ink)}
+.fc-top-v{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;margin:2px 0 4px}
+.fc-top-det{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--ink-soft)}
+.fc-sub{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 8px}
+.fc-list{display:flex;flex-direction:column;gap:5px;max-height:38vh;overflow-y:auto}
+.fc-row{display:flex;align-items:center;gap:10px;font-size:.82rem}
+.fc-row-d{flex:none;width:88px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;font-size:.74rem}
+.fc-row-bar{flex:1;height:9px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.fc-row-bar span{display:block;height:100%;border-radius:99px}
+.fc-row-info{flex:none;width:84px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint)}
+.fc-row-bar span.v-great{background:var(--green)}
+.fc-row-bar span.v-good{background:var(--cyan)}
+.fc-row-bar span.v-ok{background:var(--gold)}
+.fc-row-bar span.v-poor{background:var(--rust)}
+.fc-row-bar span.v-light{background:var(--ink-faint)}
+.fc-top-card.v-great{border-left-color:var(--green)} .fc-top-card.v-great .fc-top-v{color:var(--green)}
+.fc-top-card.v-good{border-left-color:var(--cyan)} .fc-top-card.v-good .fc-top-v{color:var(--cyan)}
+.fc-top-card.v-ok{border-left-color:var(--gold)} .fc-top-card.v-ok .fc-top-v{color:var(--gold)}
+.fc-top-card.v-poor{border-left-color:var(--rust)} .fc-top-card.v-poor .fc-top-v{color:var(--rust)}
+.fc-top-card.v-light{border-left-color:var(--ink-faint)} .fc-top-card.v-light .fc-top-v{color:var(--ink-faint)}
