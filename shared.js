@@ -905,6 +905,56 @@ function riseSet(raH, decDeg, date, latDeg, lonDeg, minAlt) {
   return {rises:rises, sets:sets, alwaysAbove:above===samp.length, neverAbove:above===0, peakAlt:peak, peakTime:peakTime};
 }
 
+// ---- Observasjonsutsikt fremover (punkt 2) ----
+// For hver natt de neste nDays dagene: finn tidspunktet i nattens MØRKE timer
+// (sol under darkSun°, standard -12 = nautisk) der objektet står høyest.
+// Returnerer en liste {date(ISO), best:{time,alt,sunAlt} | null, darkAvail, moonIllum, score, verdict}.
+// score 0..100 vekter høyde (mest) + mørke + lite måneskinn for svake objekter.
+function bestViewingNights(raH, decDeg, lat, lon, fromDate, nDays, opts) {
+  opts = opts || {};
+  var darkSun = opts.darkSun != null ? opts.darkSun : -12;  // mørkegrense for sol
+  var faint = !!opts.faint;                                  // svakt objekt → straff for måneskinn
+  nDays = nDays || 30;
+  var out = [];
+  for (var day = 0; day < nDays; day++) {
+    var base = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + day, 12, 0, 0, 0); // middag
+    var best = null, darkMin = 0;
+    // sampler middag→middag i 15-min steg; tell mørke minutter og finn objektets maks i mørke
+    for (var m = 0; m <= 1440; m += 15) {
+      var t = new Date(base.getTime() + m * 60000);
+      var sa = altAz(sunPos(t).ra, sunPos(t).dec, t, lat, lon).alt;
+      if (sa <= darkSun) {
+        darkMin += 15;
+        var oa = altAz(raH, decDeg, t, lat, lon).alt;
+        if (oa > 0 && (!best || oa > best.alt)) best = { time: t, alt: oa, sunAlt: sa };
+      }
+    }
+    var mph = moonPhase(base);
+    var moonIllum = mph.illum != null ? mph.illum : Math.round(mph.k * 100);
+    // score
+    var score = 0, verdict = 'Ikke synlig i mørke';
+    if (best) {
+      var altScore = Math.max(0, Math.min(1, best.alt / 60));            // 60°+ = full
+      var darkScore = Math.max(0, Math.min(1, darkMin / 240));            // 4t+ mørke = full
+      var moonPenalty = faint ? (moonIllum / 100) * 0.35 : 0;             // svake objekter lider av måneskinn
+      score = Math.round(Math.max(0, (0.6 * altScore + 0.4 * darkScore - moonPenalty)) * 100);
+      if (score >= 70) verdict = 'Utmerket';
+      else if (score >= 45) verdict = 'Bra';
+      else if (score >= 20) verdict = 'Mulig';
+      else verdict = 'Vanskelig';
+    } else if (darkMin === 0) {
+      verdict = 'Lyse netter';
+    }
+    var yyyy = base.getFullYear(), mm = ('0'+(base.getMonth()+1)).slice(-2), dd = ('0'+base.getDate()).slice(-2);
+    out.push({
+      date: yyyy+'-'+mm+'-'+dd,
+      best: best ? { time: best.time, alt: Math.round(best.alt), sunAlt: Math.round(best.sunAlt) } : null,
+      darkMinutes: darkMin, moonIllum: moonIllum, score: score, verdict: verdict
+    });
+  }
+  return out;
+}
+
 function compassSimple(az) {
   var d = ['Nord','Nordøst','Øst','Sørøst','Sør','Sørvest','Vest','Nordvest'];
   return d[Math.round(az/45) % 8];
@@ -1031,20 +1081,20 @@ var ALIGN_KEY = 'stjernekikkert_align_v1';
 // Lyse, lett gjenkjennelige kalibreringsstjerner spredt over himmelen.
 // ra i timer, dec i grader. Brukes til 1- eller 2-stjerners kalibrering.
 var ALIGN_STARS = [
-  {id:'polaris',   name:'Polaris (Nordstjernen)', ra:2.530,  dec:89.26, m:2.0, hint:'Står nesten stille rett i nord — finn den via Karlsvognas to ytterste kar-stjerner.'},
-  {id:'vega',      name:'Vega (Lyra)',            ra:18.615, dec:38.78, m:0.0, hint:'Skinnende klar, høyt i øst/sørøst om sommeren.'},
-  {id:'arcturus',  name:'Arcturus (Bootes)',      ra:14.261, dec:19.18, m:0.0, hint:'Klar oransje stjerne; følg «buen» fra Karlsvognas håndtak.'},
-  {id:'capella',   name:'Capella (Auriga)',       ra:5.278,  dec:46.00, m:0.1, hint:'Svært klar, sirkumpolar — lavt i nord/nordvest om sommeren.'},
-  {id:'deneb',     name:'Deneb (Svanen)',         ra:20.690, dec:45.28, m:1.3, hint:'Toppen av Det nordlige kors, høyt i øst om kvelden.'},
-  {id:'altair',    name:'Altair (Ørnen)',         ra:19.846, dec:8.87,  m:0.8, hint:'Klar stjerne i sommertriangelet, lavere i sør.'},
-  {id:'betelgeuse',name:'Betelgeuse (Orion)',     ra:5.919,  dec:7.41,  m:0.5, hint:'Oransje skulderstjerne i Orion (vinter).'},
-  {id:'rigel',     name:'Rigel (Orion)',          ra:5.242,  dec:-8.20, m:0.1, hint:'Blå-hvit fotstjerne i Orion (vinter).'},
-  {id:'sirius',    name:'Sirius (Store hund)',    ra:6.752,  dec:-16.72,m:-1.5,hint:'Himmelens klareste stjerne, lavt i sør (vinter).'},
-  {id:'pollux',    name:'Pollux (Tvillingene)',   ra:7.755,  dec:28.03, m:1.1, hint:'Den lyseste av tvillingstjernene.'},
-  {id:'dubhe',     name:'Dubhe (Karlsvogna)',     ra:11.062, dec:61.75, m:1.8, hint:'Fremre kar-stjerne i Karlsvogna (peker mot Polaris).'},
-  {id:'schedar',   name:'Schedar (Cassiopeia)',   ra:0.675,  dec:56.54, m:2.2, hint:'Klar stjerne i Cassiopeias W.'},
-  {id:'aldebaran', name:'Aldebaran (Tyren)',      ra:4.599,  dec:16.51, m:0.9, hint:'Oransje øye i Tyren, ved Hyadene.'},
-  {id:'regulus',   name:'Regulus (Løven)',        ra:10.139, dec:11.97, m:1.4, hint:'Foten av «sigden» i Løven (vår).'}
+  {id:'polaris',   name:'Polaris (Nordstjernen)', ra:2.530,  dec:89.26, m:2.0, con:null,  hint:'Står nesten stille rett i nord — finn den via Karlsvognas to ytterste kar-stjerner.'},
+  {id:'vega',      name:'Vega (Lyra)',            ra:18.615, dec:38.78, m:0.0, con:'lyr', hint:'Skinnende klar, høyt i øst/sørøst om sommeren.'},
+  {id:'arcturus',  name:'Arcturus (Bootes)',      ra:14.261, dec:19.18, m:0.0, con:null,  hint:'Klar oransje stjerne; følg «buen» fra Karlsvognas håndtak.'},
+  {id:'capella',   name:'Capella (Auriga)',       ra:5.278,  dec:46.00, m:0.1, con:'aur', hint:'Svært klar, sirkumpolar — lavt i nord/nordvest om sommeren.'},
+  {id:'deneb',     name:'Deneb (Svanen)',         ra:20.690, dec:45.28, m:1.3, con:'cyg', hint:'Toppen av Det nordlige kors, høyt i øst om kvelden.'},
+  {id:'altair',    name:'Altair (Ørnen)',         ra:19.846, dec:8.87,  m:0.8, con:'aql', hint:'Klar stjerne i sommertriangelet, lavere i sør.'},
+  {id:'betelgeuse',name:'Betelgeuse (Orion)',     ra:5.919,  dec:7.41,  m:0.5, con:'ori', hint:'Oransje skulderstjerne i Orion (vinter).'},
+  {id:'rigel',     name:'Rigel (Orion)',          ra:5.242,  dec:-8.20, m:0.1, con:'ori', hint:'Blå-hvit fotstjerne i Orion (vinter).'},
+  {id:'sirius',    name:'Sirius (Store hund)',    ra:6.752,  dec:-16.72,m:-1.5,con:'cma', hint:'Himmelens klareste stjerne, lavt i sør (vinter).'},
+  {id:'pollux',    name:'Pollux (Tvillingene)',   ra:7.755,  dec:28.03, m:1.1, con:'gem', hint:'Den lyseste av tvillingstjernene.'},
+  {id:'dubhe',     name:'Dubhe (Karlsvogna)',     ra:11.062, dec:61.75, m:1.8, con:'uma', hint:'Fremre kar-stjerne i Karlsvogna (peker mot Polaris).'},
+  {id:'schedar',   name:'Schedar (Cassiopeia)',   ra:0.675,  dec:56.54, m:2.2, con:'cas', hint:'Klar stjerne i Cassiopeias W.'},
+  {id:'aldebaran', name:'Aldebaran (Tyren)',      ra:4.599,  dec:16.51, m:0.9, con:'tau', hint:'Oransje øye i Tyren, ved Hyadene.'},
+  {id:'regulus',   name:'Regulus (Løven)',        ra:10.139, dec:11.97, m:1.4, con:'leo', hint:'Foten av «sigden» i Løven (vår).'}
 ];
 function alignStarById(id){ for(var i=0;i<ALIGN_STARS.length;i++) if(ALIGN_STARS[i].id===id) return ALIGN_STARS[i]; return null; }
 

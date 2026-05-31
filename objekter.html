@@ -40,6 +40,34 @@
 .cat-why{font-size:.85rem;color:var(--ink-soft);margin-top:3px}
 .cat-sub{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint);margin-top:5px}
 .cat-season{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:3px 9px;margin-top:7px;line-height:1.25}
+
+/* Observasjonsutsikt (punkt 2) */
+.fc-btn{display:block;width:100%;margin:0 0 12px;padding:11px;border-radius:10px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:600;border:1px solid rgba(240,196,106,.4);color:var(--gold);background:rgba(240,196,106,.08);transition:all .15s}
+.fc-btn:hover{background:rgba(240,196,106,.18)}
+.fc-body{margin:4px 0 14px}
+.fc-empty{color:var(--ink-soft);font-size:.92rem;line-height:1.6;padding:8px 0}
+.fc-top{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:16px}
+.fc-top-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel-soft);border-left-width:3px}
+.fc-top-date{font-family:'Fraunces',serif;font-size:1.02rem;font-weight:600;color:var(--ink)}
+.fc-top-v{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;margin:2px 0 4px}
+.fc-top-det{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--ink-soft)}
+.fc-sub{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 8px}
+.fc-list{display:flex;flex-direction:column;gap:5px;max-height:38vh;overflow-y:auto}
+.fc-row{display:flex;align-items:center;gap:10px;font-size:.82rem}
+.fc-row-d{flex:none;width:88px;color:var(--ink-soft);font-family:'JetBrains Mono',monospace;font-size:.74rem}
+.fc-row-bar{flex:1;height:9px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.fc-row-bar span{display:block;height:100%;border-radius:99px}
+.fc-row-info{flex:none;width:84px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint)}
+.fc-row-bar span.v-great{background:var(--green)}
+.fc-row-bar span.v-good{background:var(--cyan)}
+.fc-row-bar span.v-ok{background:var(--gold)}
+.fc-row-bar span.v-poor{background:var(--rust)}
+.fc-row-bar span.v-light{background:var(--ink-faint)}
+.fc-top-card.v-great{border-left-color:var(--green)} .fc-top-card.v-great .fc-top-v{color:var(--green)}
+.fc-top-card.v-good{border-left-color:var(--cyan)} .fc-top-card.v-good .fc-top-v{color:var(--cyan)}
+.fc-top-card.v-ok{border-left-color:var(--gold)} .fc-top-card.v-ok .fc-top-v{color:var(--gold)}
+.fc-top-card.v-poor{border-left-color:var(--rust)} .fc-top-card.v-poor .fc-top-v{color:var(--rust)}
+.fc-top-card.v-light{border-left-color:var(--ink-faint)} .fc-top-card.v-light .fc-top-v{color:var(--ink-faint)}
 .cat-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
 .cat-ep{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-soft)}
 .cat-ep b{color:var(--gold)}
@@ -103,6 +131,16 @@
     <div class="fm-hint" id="fm-hint"></div>
     <div class="fm-note">Stjernekartet er sett mot sør: <b>nord opp, øst til venstre</b>. Gullsiktet er objektet du leter etter. Bruk søkekikkerten til å hoppe fra de navngitte stjernene.</div>
     <button class="fm-close" id="fm-close-btn">Lukk</button>
+  </div>
+</div>
+
+<div id="fc-modal" class="finder-modal" aria-hidden="true">
+  <div class="fm-bg" id="fc-close-bg"></div>
+  <div class="fm-box" role="dialog" aria-modal="true" aria-labelledby="fc-title">
+    <div class="fm-title" id="fc-title"></div>
+    <div class="fc-body" id="fc-body"></div>
+    <div class="fm-note">Vurdert ut fra objektets høyde over horisonten og hvor mørkt det er (sol under −12°). Måneskinn teller med for svake objekter. Skydekke er <b>ikke</b> medregnet — sjekk været separat.</div>
+    <button class="fm-close" id="fc-close-btn">Lukk</button>
   </div>
 </div>
 
@@ -215,6 +253,7 @@
       (o.expect?'<div class="expect"><b>I kikkerten:</b> '+htmlEscape(o.expect)+'</div>':'')+
       (o.anchor?'<div class="anchor-hint clickable" data-finder="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'"><b>Slik finner du den:</b> '+htmlEscape(o.anchor)+' <span class="tap">▸ vis kart</span></div>':'')+
       ((o.type!=='planet'&&o.type!=='moon')?'<button class="aim-btn" data-aim="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" data-name="'+htmlEscape(o.name)+'">📡 Assistert sikting</button>':'')+
+      ((o.type!=='planet'&&o.type!=='moon')?'<button class="fc-btn" data-fc="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" data-name="'+htmlEscape(o.name)+'" data-type="'+o.type+'">📅 Når kan jeg se den?</button>':'')+
       '<div class="cat-foot">'+epGuidance(o)+
         '<button class="seen-btn'+(seen?' on':'')+'" data-seen="'+o.id+'">'+(seen?'<span class="ck">✓</span> Sett':'+ Sett det')+'</button></div>'+
       '</div>';
@@ -253,6 +292,11 @@
       var tg = { id: aim.getAttribute('data-aim'), name: aim.getAttribute('data-name'), ra: parseFloat(aim.getAttribute('data-ra')), dec: parseFloat(aim.getAttribute('data-dec')) };
       try { localStorage.setItem('stjernekikkert_aim_target', JSON.stringify(tg)); } catch(err){}
       window.location.href = 'sikt.html';
+      return;
+    }
+    var fc = e.target.closest('.fc-btn');
+    if (fc){
+      openForecastModal(fc.getAttribute('data-name'), parseFloat(fc.getAttribute('data-ra')), parseFloat(fc.getAttribute('data-dec')), fc.getAttribute('data-type'));
     }
   });
 
@@ -275,6 +319,67 @@
   document.getElementById('fm-close-btn').addEventListener('click', closeFinderModal);
   document.getElementById('fm-close-bg').addEventListener('click', closeFinderModal);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && finderModal.classList.contains('show')) closeFinderModal(); });
+
+  // ---- Observasjonsutsikt-modal (punkt 2) ----
+  var fcModal = document.getElementById('fc-modal'), fcLastFocus = null;
+  var MND = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+  var DAG = ['søn','man','tir','ons','tor','fre','lør'];
+  function fcDateLabel(iso){
+    var d = new Date(iso+'T12:00:00');
+    return DAG[d.getDay()]+' '+d.getDate()+'. '+MND[d.getMonth()];
+  }
+  function verdictClass(v){
+    if (v==='Utmerket') return 'v-great';
+    if (v==='Bra') return 'v-good';
+    if (v==='Mulig') return 'v-ok';
+    if (v==='Lyse netter') return 'v-light';
+    return 'v-poor';
+  }
+  function openForecastModal(name, raH, decDeg, type){
+    var faint = (type==='galaxy' || type==='nebula');   // svake objekter lider mest av måneskinn
+    var nights = bestViewingNights(raH, decDeg, setup.location.lat, setup.location.lon, new Date(), 30, {faint:faint});
+    document.getElementById('fc-title').innerHTML = '📅 '+htmlEscape(name)+' — neste 30 netter';
+
+    // de beste først (synlige), så en kompakt liste
+    var visible = nights.filter(function(n){ return n.best; });
+    var html = '';
+    if (!visible.length){
+      var lyse = nights.filter(function(n){ return n.verdict==='Lyse netter'; }).length;
+      html = '<div class="fc-empty">'+(lyse? 'For lyst om natta de neste ukene (lyse netter / midnattssol-sesong). Prøv igjen utover høsten.' : 'Objektet kommer ikke høyt nok over horisonten herfra de neste 30 nettene.')+'</div>';
+    } else {
+      // topp 3 fremhevet
+      var ranked = visible.slice().sort(function(a,b){ return b.score - a.score; }).slice(0,3);
+      html += '<div class="fc-top">';
+      ranked.forEach(function(n){
+        html += '<div class="fc-top-card '+verdictClass(n.verdict)+'">'+
+          '<div class="fc-top-date">'+fcDateLabel(n.date)+'</div>'+
+          '<div class="fc-top-v">'+n.verdict+'</div>'+
+          '<div class="fc-top-det">'+fmtTime(n.best.time)+' · '+n.best.alt+'° opp · 🌙 '+n.moonIllum+'%</div>'+
+          '</div>';
+      });
+      html += '</div><div class="fc-sub">Alle synlige netter:</div><div class="fc-list">';
+      visible.forEach(function(n){
+        var w = Math.max(4, n.score);
+        html += '<div class="fc-row">'+
+          '<div class="fc-row-d">'+fcDateLabel(n.date)+'</div>'+
+          '<div class="fc-row-bar"><span class="'+verdictClass(n.verdict)+'" style="width:'+w+'%"></span></div>'+
+          '<div class="fc-row-info">'+fmtTime(n.best.time)+' · '+n.best.alt+'°</div>'+
+          '</div>';
+      });
+      html += '</div>';
+    }
+    document.getElementById('fc-body').innerHTML = html;
+    fcLastFocus = document.activeElement;
+    fcModal.classList.add('show'); fcModal.setAttribute('aria-hidden','false');
+    document.getElementById('fc-close-btn').focus();
+  }
+  function closeForecastModal(){
+    fcModal.classList.remove('show'); fcModal.setAttribute('aria-hidden','true');
+    if (fcLastFocus && fcLastFocus.focus) fcLastFocus.focus();
+  }
+  document.getElementById('fc-close-btn').addEventListener('click', closeForecastModal);
+  document.getElementById('fc-close-bg').addEventListener('click', closeForecastModal);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && fcModal.classList.contains('show')) closeForecastModal(); });
 
   initNightMode();
   initInstall();
