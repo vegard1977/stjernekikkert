@@ -914,6 +914,7 @@ function bestViewingNights(raH, decDeg, lat, lon, fromDate, nDays, opts) {
   opts = opts || {};
   var darkSun = opts.darkSun != null ? opts.darkSun : -12;  // mørkegrense for sol
   var faint = !!opts.faint;                                  // svakt objekt → straff for måneskinn
+  var posFn = opts.posFn || null;     // valgfri: funksjon(date)->{ra,dec} for objekter som flytter seg (planeter/måne)
   nDays = nDays || 30;
   var out = [];
   for (var day = 0; day < nDays; day++) {
@@ -925,7 +926,8 @@ function bestViewingNights(raH, decDeg, lat, lon, fromDate, nDays, opts) {
       var sa = altAz(sunPos(t).ra, sunPos(t).dec, t, lat, lon).alt;
       if (sa <= darkSun) {
         darkMin += 15;
-        var oa = altAz(raH, decDeg, t, lat, lon).alt;
+        var pr = posFn ? posFn(t) : {ra:raH, dec:decDeg};
+        var oa = altAz(pr.ra, pr.dec, t, lat, lon).alt;
         if (oa > 0 && (!best || oa > best.alt)) best = { time: t, alt: oa, sunAlt: sa };
       }
     }

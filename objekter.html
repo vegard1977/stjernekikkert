@@ -42,8 +42,12 @@
 .cat-season{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:3px 9px;margin-top:7px;line-height:1.25}
 
 /* Observasjonsutsikt (punkt 2) */
-.fc-btn{display:block;width:100%;margin:0 0 12px;padding:11px;border-radius:10px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:600;border:1px solid rgba(240,196,106,.4);color:var(--gold);background:rgba(240,196,106,.08);transition:all .15s}
-.fc-btn:hover{background:rgba(240,196,106,.18)}
+.cat-name.fc-open{cursor:pointer;border-radius:8px;transition:color .15s}
+.cat-name.fc-open:hover{color:var(--gold)}
+.cat-name.fc-open:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.fc-cal{font-size:.82rem;opacity:.55;transition:opacity .15s}
+.cat-name.fc-open:hover .fc-cal{opacity:1}
+.fc-pnote{font-size:.82rem;color:var(--ink-soft);background:rgba(111,216,224,.07);border:1px solid rgba(111,216,224,.25);border-radius:8px;padding:8px 12px;margin-bottom:12px}
 .fc-body{margin:4px 0 14px}
 .fc-empty{color:var(--ink-soft);font-size:.92rem;line-height:1.6;padding:8px 0}
 .fc-top{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:16px}
@@ -165,7 +169,7 @@
   var MOON_CAT = MOONS.map(function(m){
     var parentName = m.parent ? (PLANETS_2026.filter(function(p){return p.id===m.parent;})[0]||{}).name : null;
     return {id:m.id, emo:m.emo, name:m.name, type:'moon', idealMag:m.idealMag,
-            why:m.why, expect:m.expect, mag:m.mag, season:m.season, parentName:parentName};
+            why:m.why, expect:m.expect, mag:m.mag, season:m.season, parentName:parentName, parent:m.parent};
   });
   // Planetene som katalogoppføringer (posisjon er irrelevant her — beskrivende referanse)
   var PLANET_CAT = PLANETS_2026.map(function(p){
@@ -245,15 +249,14 @@
     }
     return '<div class="cat-card t-'+o.type+'">'+
       '<div class="cat-head"><div class="cat-emo">'+o.emo+'</div>'+
-      '<div class="cat-title"><div class="cat-name">'+htmlEscape(o.name)+
-        ' <span class="type-tag '+o.type+'">'+(TYPE_LABEL[o.type]||o.type)+'</span></div>'+
+      '<div class="cat-title"><div class="cat-name fc-open" data-fc="'+o.id+'" data-type="'+o.type+'" role="button" tabindex="0" title="Når kan jeg se den?">'+htmlEscape(o.name)+
+        ' <span class="type-tag '+o.type+'">'+(TYPE_LABEL[o.type]||o.type)+'</span> <span class="fc-cal">📅</span></div>'+
       '<div class="cat-why">'+htmlEscape(o.why)+'</div>'+
       (sub.length?'<div class="cat-sub">'+sub.join(' · ')+'</div>':'')+
       (o.season?'<div class="cat-season">'+htmlEscape(o.season)+'</div>':'')+'</div></div>'+
       (o.expect?'<div class="expect"><b>I kikkerten:</b> '+htmlEscape(o.expect)+'</div>':'')+
       (o.anchor?'<div class="anchor-hint clickable" data-finder="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'"><b>Slik finner du den:</b> '+htmlEscape(o.anchor)+' <span class="tap">▸ vis kart</span></div>':'')+
       ((o.type!=='planet'&&o.type!=='moon')?'<button class="aim-btn" data-aim="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" data-name="'+htmlEscape(o.name)+'">📡 Assistert sikting</button>':'')+
-      ((o.type!=='planet'&&o.type!=='moon')?'<button class="fc-btn" data-fc="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" data-name="'+htmlEscape(o.name)+'" data-type="'+o.type+'">📅 Når kan jeg se den?</button>':'')+
       '<div class="cat-foot">'+epGuidance(o)+
         '<button class="seen-btn'+(seen?' on':'')+'" data-seen="'+o.id+'">'+(seen?'<span class="ck">✓</span> Sett':'+ Sett det')+'</button></div>'+
       '</div>';
@@ -294,10 +297,17 @@
       window.location.href = 'sikt.html';
       return;
     }
-    var fc = e.target.closest('.fc-btn');
+    var fc = e.target.closest('.fc-open');
     if (fc){
-      openForecastModal(fc.getAttribute('data-name'), parseFloat(fc.getAttribute('data-ra')), parseFloat(fc.getAttribute('data-dec')), fc.getAttribute('data-type'));
+      var fo = objById(fc.getAttribute('data-fc'));
+      if (fo) openForecastModal(fo);
     }
+  });
+
+  document.getElementById('cat-grid').addEventListener('keydown', function(e){
+    if (e.key!=='Enter' && e.key!==' ') return;
+    var fc = e.target.closest('.fc-open');
+    if (fc){ e.preventDefault(); var fo = objById(fc.getAttribute('data-fc')); if (fo) openForecastModal(fo); }
   });
 
   // ---- Finnekart-modal (FIND-4) ----
@@ -335,19 +345,29 @@
     if (v==='Lyse netter') return 'v-light';
     return 'v-poor';
   }
-  function openForecastModal(name, raH, decDeg, type){
-    var faint = (type==='galaxy' || type==='nebula');   // svake objekter lider mest av måneskinn
-    var nights = bestViewingNights(raH, decDeg, setup.location.lat, setup.location.lon, new Date(), 30, {faint:faint});
+  function openForecastModal(o){
+    var name = o.name, type = o.type;
+    var faint = (type==='galaxy' || type==='nebula');
+    var posFn = null, raH = o.ra, decDeg = o.dec, note = '';
+    if (type==='planet'){
+      posFn = function(t){ return planetPos(o.id, t); };
+    } else if (type==='moon' && o.id==='luna'){
+      posFn = function(t){ return moonPos(t); };
+    } else if (type==='moon' && o.parent){
+      // Jupiter/Saturn-måne: følger planeten på himmelen
+      posFn = function(t){ return planetPos(o.parent, t); };
+      note = 'Følger '+htmlEscape(o.parentName||'planeten')+' på himmelen.';
+    }
+    var nights = bestViewingNights(raH, decDeg, setup.location.lat, setup.location.lon, new Date(), 30, {faint:faint, posFn:posFn});
     document.getElementById('fc-title').innerHTML = '📅 '+htmlEscape(name)+' — neste 30 netter';
 
-    // de beste først (synlige), så en kompakt liste
     var visible = nights.filter(function(n){ return n.best; });
     var html = '';
+    if (note) html += '<div class="fc-pnote">'+note+'</div>';
     if (!visible.length){
       var lyse = nights.filter(function(n){ return n.verdict==='Lyse netter'; }).length;
-      html = '<div class="fc-empty">'+(lyse? 'For lyst om natta de neste ukene (lyse netter / midnattssol-sesong). Prøv igjen utover høsten.' : 'Objektet kommer ikke høyt nok over horisonten herfra de neste 30 nettene.')+'</div>';
+      html += '<div class="fc-empty">'+(lyse? 'For lyst om natta de neste ukene (lyse netter / midnattssol-sesong). Prøv igjen utover høsten.' : 'Objektet kommer ikke høyt nok over horisonten herfra de neste 30 nettene.')+'</div>';
     } else {
-      // topp 3 fremhevet
       var ranked = visible.slice().sort(function(a,b){ return b.score - a.score; }).slice(0,3);
       html += '<div class="fc-top">';
       ranked.forEach(function(n){
