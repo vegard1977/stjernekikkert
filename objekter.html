@@ -39,7 +39,7 @@
 .cat-name{font-family:'Fraunces',serif;font-size:1.08rem;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .cat-why{font-size:.85rem;color:var(--ink-soft);margin-top:3px}
 .cat-sub{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--ink-faint);margin-top:5px}
-.cat-season{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.cat-season{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:3px 9px;margin-top:7px;line-height:1.25}
 .cat-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
 .cat-ep{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-soft)}
 .cat-ep b{color:var(--gold)}
@@ -210,8 +210,8 @@
       '<div class="cat-title"><div class="cat-name">'+htmlEscape(o.name)+
         ' <span class="type-tag '+o.type+'">'+(TYPE_LABEL[o.type]||o.type)+'</span></div>'+
       '<div class="cat-why">'+htmlEscape(o.why)+'</div>'+
-      (sub.length?'<div class="cat-sub">'+sub.join(' · ')+'</div>':'')+'</div>'+
-      '<span class="cat-season">'+htmlEscape(o.season||'')+'</span></div>'+
+      (sub.length?'<div class="cat-sub">'+sub.join(' · ')+'</div>':'')+
+      (o.season?'<div class="cat-season">'+htmlEscape(o.season)+'</div>':'')+'</div></div>'+
       (o.expect?'<div class="expect"><b>I kikkerten:</b> '+htmlEscape(o.expect)+'</div>':'')+
       (o.anchor?'<div class="anchor-hint clickable" data-finder="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'"><b>Slik finner du den:</b> '+htmlEscape(o.anchor)+' <span class="tap">▸ vis kart</span></div>':'')+
       ((o.type!=='planet'&&o.type!=='moon')?'<button class="aim-btn" data-aim="'+o.id+'" data-ra="'+o.ra+'" data-dec="'+o.dec+'" data-name="'+htmlEscape(o.name)+'">📡 Assistert sikting</button>':'')+
