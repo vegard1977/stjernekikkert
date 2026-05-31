@@ -134,7 +134,7 @@
   <!-- Kalibrering -->
   <section class="panel" id="calib-panel">
     <div class="panel-title"><span class="num">⊕</span> Kalibrering</div>
-    <p class="hint" style="margin-bottom:12px">Pek kikkerten nøyaktig på en kjent stjerne du ser, og trykk «🎯 Kalibrer her» på den. To stjerner (helst langt fra hverandre) gir best presisjon. Stjerner under horisonten er nedtonet, men kan brukes til å teste funksjonen på dagtid.</p>
+    <p class="hint" style="margin-bottom:12px">Velg et mål under «Velg hva du vil sikte mot», pek kikkerten nøyaktig på det, og trykk «🎯 Kalibrer på dette objektet». To stjerner (helst langt fra hverandre) gir best presisjon.</p>
     <div class="banner info" style="margin-bottom:14px">💡 <b>Først:</b> kalibrer telefonens kompass ved å bevege den i et liggende 8-tall noen ganger (samme bevegelse som Google Maps ber om). Hold telefonen unna metall mens du gjør det — gjerne et lite stykke fra teleskoptuben. Et stabilt kompass gir bedre sikting.</div>
     <div id="calib-body"></div>
   </section>
@@ -297,7 +297,7 @@
       });
       html += '</div>';
     } else {
-      html += '<div class="banner warn" style="margin-bottom:14px"><b>Ingen aktiv kalibrering.</b> Sikt mot en stjerne du ser og trykk «🎯 Kalibrer her» under — eller bruk «Kalibrer på dette objektet» når du sikter mot et mål.</div>';
+      html += '<div class="banner warn" style="margin-bottom:14px"><b>Ingen aktiv kalibrering.</b> Velg et mål under «Velg hva du vil sikte mot», pek kikkerten på det, og trykk «🎯 Kalibrer på dette objektet».</div>';
     }
 
     if (lastCapture){
@@ -308,29 +308,10 @@
         'Telefonen målte: az '+Math.round(lastCapture.azMeas)+'° · '+Math.round(lastCapture.altMeas)+'° opp</span></div>';
     }
 
-    html += '<div class="step-pill">'+(calPoints.length>=2?'2 punkter aktive (maks)':'sikt og kalibrer')+'</div>';
-    html += '<p class="hint" style="margin-bottom:10px">Pek kikkerten nøyaktig på en stjerne du ser, sentrer den, og trykk <b>«🎯 Kalibrer her»</b>. To stjerner langt fra hverandre gir best presisjon. Punkter under horisonten er nedtonet (kun for testing).</p>';
-    var stars = ALIGN_STARS.map(function(s){
-      var aa = altAz(s.ra, s.dec, now, lat, lon); return {s:s, alt:aa.alt, az:aa.az};
-    }).sort(function(a,b){ return b.alt-a.alt; });
-    html += '<div class="star-grid">'+ stars.map(function(x){
-      var up = x.alt >= 5;
-      return '<div class="star-opt'+(up?'':' below')+'" style="cursor:default">'+
-        '<div class="sn">'+htmlEscape(x.s.name)+'</div>'+
-        '<div class="sh">'+htmlEscape(x.s.hint)+'</div>'+
-        '<div class="sp">'+(up?('az '+Math.round(x.az)+'° · '+Math.round(x.alt)+'° opp · '+compassSimple(x.az)):('under horisonten nå ('+Math.round(x.alt)+'°)'))+'</div>'+
-        '<button class="cal-go" data-cal="'+x.s.id+'">🎯 Kalibrer her</button>'+
-        '</div>';
-    }).join('') +'</div>';
+    html += '<p class="hint" style="margin-bottom:10px">Slik kalibrerer du: velg et mål under <b>«Velg hva du vil sikte mot»</b>, pek kikkerten nøyaktig på det, og trykk <b>«🎯 Kalibrer på dette objektet»</b>. To stjerner langt fra hverandre gir best presisjon. Kalibrer på nytt hvis du flytter teleskopet.</p>';
     if (cal || calPoints.length) html += '<button class="big-btn" id="reset-cal" style="border-color:var(--rust);color:var(--rust);background:rgba(232,131,90,.08)">Nullstill all kalibrering</button>';
     body.innerHTML = html;
 
-    body.querySelectorAll('[data-cal]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var s = alignStarById(this.getAttribute('data-cal'));
-        if (capturePoint(s.name, s.ra, s.dec)) document.getElementById('calib-body').scrollIntoView({behavior:'smooth', block:'start'});
-      });
-    });
     body.querySelectorAll('[data-del]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var i = +this.getAttribute('data-del');
