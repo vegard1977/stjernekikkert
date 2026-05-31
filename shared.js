@@ -1048,9 +1048,17 @@ var ALIGN_STARS = [
 ];
 function alignStarById(id){ for(var i=0;i<ALIGN_STARS.length;i++) if(ALIGN_STARS[i].id===id) return ALIGN_STARS[i]; return null; }
 
+var ALIGN_MAX_AGE_MS = 6 * 3600 * 1000;  // 6 timer ≈ samme økt/natt
 function loadAlign(){
-  try { return JSON.parse(localStorage.getItem(ALIGN_KEY)) || null; } catch(e){ return null; }
+  try {
+    var a = JSON.parse(localStorage.getItem(ALIGN_KEY));
+    if (!a) return null;
+    // forkast kalibrering fra en tidligere økt (f.eks. i går)
+    if (a.ts && (Date.now() - a.ts) > ALIGN_MAX_AGE_MS) { clearAlign(); return null; }
+    return a;
+  } catch(e){ return null; }
 }
+function alignAgeMin(a){ return (a && a.ts) ? Math.round((Date.now() - a.ts)/60000) : null; }
 function saveAlign(a){ try { localStorage.setItem(ALIGN_KEY, JSON.stringify(a)); } catch(e){} }
 function clearAlign(){ try { localStorage.removeItem(ALIGN_KEY); } catch(e){} }
 
@@ -1065,20 +1073,25 @@ function angDiffDeg(a, b){ var d = (a - b) % 360; if (d > 180) d -= 360; if (d <
 // 2 stjerner: forskyvning + lineær skala på az (korrigerer kompass-drift over himmelen).
 function buildCalibration(points){
   if (!points || !points.length) return null;
+  var cal;
   if (points.length === 1){
     var p = points[0];
-    return { azOffset: angDiffDeg(p.azTrue, p.azMeas), altOffset: p.altTrue - p.altMeas, azScale: 1, type:'1-stjerne' };
+    cal = { azOffset: angDiffDeg(p.azTrue, p.azMeas), altOffset: p.altTrue - p.altMeas, azScale: 1, type:'1-stjerne' };
+  } else {
+    // 2-stjerners: løs azTrue = azScale*azMeas + azOffset (på «utfoldede» az-verdier)
+    var p1 = points[0], p2 = points[1];
+    var m1 = p1.azMeas, m2 = p1.azMeas + angDiffDeg(p2.azMeas, p1.azMeas);
+    var t1 = p1.azTrue, t2 = p1.azTrue + angDiffDeg(p2.azTrue, p1.azTrue);
+    var dm = (m2 - m1);
+    var azScale = Math.abs(dm) > 5 ? (t2 - t1) / dm : 1;
+    var azOffset = t1 - azScale * m1;
+    var altOffset = ((p1.altTrue - p1.altMeas) + (p2.altTrue - p2.altMeas)) / 2;
+    cal = { azOffset: azOffset, altOffset: altOffset, azScale: azScale, type:'2-stjerner' };
   }
-  // 2-stjerners: løs azTrue = azScale*azMeas + azOffset (på «utfoldede» az-verdier)
-  var p1 = points[0], p2 = points[1];
-  // fold ut az slik at differansen er kontinuerlig
-  var m1 = p1.azMeas, m2 = p1.azMeas + angDiffDeg(p2.azMeas, p1.azMeas);
-  var t1 = p1.azTrue, t2 = p1.azTrue + angDiffDeg(p2.azTrue, p1.azTrue);
-  var dm = (m2 - m1);
-  var azScale = Math.abs(dm) > 5 ? (t2 - t1) / dm : 1;   // unngå ustabilitet hvis stjernene står for nær
-  var azOffset = t1 - azScale * m1;
-  var altOffset = ((p1.altTrue - p1.altMeas) + (p2.altTrue - p2.altMeas)) / 2;
-  return { azOffset: azOffset, altOffset: altOffset, azScale: azScale, type:'2-stjerner' };
+  // behold punktene (med stjernenavn) + tidsstempel for oversikt/utløp
+  cal.points = points.slice(0, 2);
+  cal.ts = Date.now();
+  return cal;
 }
 
 // Bruk kalibrering på en rå sensormåling → korrigert (sann) az/alt.

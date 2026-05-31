@@ -61,6 +61,15 @@
 .cal-go:hover{background:rgba(111,216,224,.24)}
 .cal-go:active{transform:scale(.98)}
 
+.cal-active{background:rgba(138,217,156,.06);border:1px solid rgba(138,217,156,.3);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.cal-active-hd{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--green);margin-bottom:8px;font-weight:700}
+.cal-pt{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.84rem}
+.cal-pt:last-child{border-bottom:none}
+.cal-pt-name{color:var(--ink);font-weight:500;flex:none}
+.cal-pt-info{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-faint);flex:1;min-width:0}
+.cal-pt-del{background:none;border:1px solid var(--line-strong);color:var(--ink-faint);width:28px;height:28px;border-radius:6px;cursor:pointer;flex:none;transition:all .15s}
+.cal-pt-del:hover{border-color:var(--rust);color:var(--rust)}
+
 .muted{color:var(--ink-faint)}
 .hidden{display:none}
 .step-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bg);background:var(--gold);border-radius:99px;padding:2px 10px;margin-bottom:10px}
@@ -111,6 +120,7 @@
       </div>
       <div class="aim-readout" id="aim-readout">Beveg kikkerten …</div>
     </div>
+    <button class="big-btn gold" id="aim-calibrate">🎯 Kalibrer på dette objektet</button>
     <button class="big-btn" id="clear-target">Velg annet mål</button>
   </section>
 
@@ -142,6 +152,7 @@
   var sensorOK = false, rawAz = null, rawAlt = null;
   var calPoints = [];                 // fangede kalibreringspunkter denne økten
   var cal = loadAlign();              // lagret kalibrering
+  if (cal && cal.points) calPoints = cal.points.slice(0, 2);  // gjenopprett punkter for oversikt
   var target = null;                  // {name, ra, dec} valgt mål
   var lockHold = 0;
 
@@ -244,26 +255,61 @@
     if (s) setTarget({name:s.name, ra:s.ra, dec:s.dec});
   });
 
+  // Felles fangst: legg til et kalibreringspunkt for en kjent retning og bygg kalibrering.
+  function capturePoint(name, raH, decDeg){
+    if (rawAz == null){ alert('Ingen sensordata ennå — sjekk sensortilgang øverst på siden.'); return false; }
+    var aa = altAz(raH, decDeg, new Date(), lat, lon);
+    if (aa.alt < 0 && !confirm(name+' står under horisonten nå. Kalibrering blir bare meningsfull mot en stjerne du faktisk ser. Fortsette likevel?')) return false;
+    calPoints.push({ name:name, azMeas:rawAz, altMeas:rawAlt, azTrue:aa.az, altTrue:aa.alt });
+    if (calPoints.length > 2) calPoints = calPoints.slice(-2);   // maks 2 punkter (matematikken bruker 1–2)
+    lastCapture = { name:name, azTrue:aa.az, altTrue:aa.alt, azMeas:rawAz, altMeas:rawAlt };
+    cal = buildCalibration(calPoints); saveAlign(cal);           // ta i bruk umiddelbart
+    renderCalStatus(); renderCalib();
+    return true;
+  }
+
+  // «Kalibrer på dette objektet» — bruk målet du allerede sikter på
+  document.getElementById('aim-calibrate').addEventListener('click', function(){
+    if (!target) return;
+    if (capturePoint(target.name, target.ra, target.dec)){
+      alert('✓ Kalibrert på '+target.name+' ('+cal.type+'). '+
+        (calPoints.length<2 ? 'Tips: kalibrer på ett objekt til (langt unna) for enda bedre presisjon.' : 'God 2-stjerners kalibrering aktiv.'));
+    }
+  });
+
   // ---- Kalibreringspanel ----
   var lastCapture = null;  // {name, azTrue, altTrue, azMeas, altMeas}
   function renderCalib(){
     var body = document.getElementById('calib-body');
     var now = new Date();
     var html = '';
-    // Bekreftelse på sist fangede stjerne
+
+    // Oversikt over aktive kalibreringspunkter (med slett per punkt)
+    if (calPoints.length){
+      var age = cal ? alignAgeMin(cal) : 0;
+      html += '<div class="cal-active"><div class="cal-active-hd">Aktiv kalibrering — '+
+        (calPoints.length>=2?'2-stjerners (best)':'1-stjerne')+
+        (age!=null?' · '+(age<1?'nå':age+' min gammel'):'')+'</div>';
+      calPoints.forEach(function(p, i){
+        html += '<div class="cal-pt"><span class="cal-pt-name">⊕ '+htmlEscape(p.name||'punkt '+(i+1))+'</span>'+
+          '<span class="cal-pt-info">telefon az '+Math.round(p.azMeas)+'° → sann '+Math.round(p.azTrue)+'°</span>'+
+          '<button class="cal-pt-del" data-del="'+i+'" title="Slett dette punktet">✕</button></div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="banner warn" style="margin-bottom:14px"><b>Ingen aktiv kalibrering.</b> Sikt mot en stjerne du ser og trykk «🎯 Kalibrer her» under — eller bruk «Kalibrer på dette objektet» når du sikter mot et mål.</div>';
+    }
+
     if (lastCapture){
       html += '<div class="banner ok" style="background:rgba(138,217,156,.1);border:1px solid rgba(138,217,156,.4);color:var(--green)">'+
-        '✓ <b>Fanget '+htmlEscape(lastCapture.name)+'</b><br>'+
+        '✓ <b>Kalibrert på '+htmlEscape(lastCapture.name)+'</b><br>'+
         '<span style="font-family:\'JetBrains Mono\',monospace;font-size:.8rem;color:var(--ink-soft)">'+
         'Stjernen står: az '+Math.round(lastCapture.azTrue)+'° · '+Math.round(lastCapture.altTrue)+'° opp<br>'+
         'Telefonen målte: az '+Math.round(lastCapture.azMeas)+'° · '+Math.round(lastCapture.altMeas)+'° opp</span></div>';
     }
-    if (calPoints.length){
-      html += '<div class="banner info">Du har fanget <b>'+calPoints.length+'</b> stjerne'+(calPoints.length>1?'r':'')+'. '+
-        (calPoints.length>=2?'God 2-stjerners kalibrering klar — trykk «Bruk kalibrering».':'Fang gjerne én til, langt unna den første, for bedre presisjon — eller bruk denne nå.')+'</div>';
-    }
-    html += '<div class="step-pill">Steg '+(calPoints.length+1)+': sikt og kalibrer</div>';
-    html += '<p class="hint" style="margin-bottom:10px">Pek kikkerten nøyaktig på en stjerne du ser, sentrer den i okularet, og trykk <b>«🎯 Kalibrer her»</b> på den stjernen:</p>';
+
+    html += '<div class="step-pill">'+(calPoints.length>=2?'2 punkter aktive (maks)':'sikt og kalibrer')+'</div>';
+    html += '<p class="hint" style="margin-bottom:10px">Pek kikkerten nøyaktig på en stjerne du ser, sentrer den, og trykk <b>«🎯 Kalibrer her»</b>. To stjerner langt fra hverandre gir best presisjon. Punkter under horisonten er nedtonet (kun for testing).</p>';
     var stars = ALIGN_STARS.map(function(s){
       var aa = altAz(s.ra, s.dec, now, lat, lon); return {s:s, alt:aa.alt, az:aa.az};
     }).sort(function(a,b){ return b.alt-a.alt; });
@@ -276,28 +322,23 @@
         '<button class="cal-go" data-cal="'+x.s.id+'">🎯 Kalibrer her</button>'+
         '</div>';
     }).join('') +'</div>';
-    if (calPoints.length>=1) html += '<button class="big-btn gold" id="finish-cal">✓ Bruk kalibrering ('+calPoints.length+' stjerne'+(calPoints.length>1?'r':'')+')</button>';
-    if (cal || calPoints.length) html += '<button class="big-btn" id="reset-cal" style="border-color:var(--rust);color:var(--rust);background:rgba(232,131,90,.08)">Nullstill kalibrering</button>';
+    if (cal || calPoints.length) html += '<button class="big-btn" id="reset-cal" style="border-color:var(--rust);color:var(--rust);background:rgba(232,131,90,.08)">Nullstill all kalibrering</button>';
     body.innerHTML = html;
 
     body.querySelectorAll('[data-cal]').forEach(function(btn){
       btn.addEventListener('click', function(){
-        if (rawAz == null){ alert('Ingen sensordata ennå — sjekk sensortilgang øverst på siden.'); return; }
         var s = alignStarById(this.getAttribute('data-cal'));
-        var aa = altAz(s.ra, s.dec, new Date(), lat, lon);
-        calPoints.push({ azMeas:rawAz, altMeas:rawAlt, azTrue:aa.az, altTrue:aa.alt });
-        if (calPoints.length>2) calPoints = calPoints.slice(-2);
-        lastCapture = { name:s.name, azTrue:aa.az, altTrue:aa.alt, azMeas:rawAz, altMeas:rawAlt };
-        renderCalib();
-        document.getElementById('calib-body').scrollIntoView({behavior:'smooth', block:'start'});
+        if (capturePoint(s.name, s.ra, s.dec)) document.getElementById('calib-body').scrollIntoView({behavior:'smooth', block:'start'});
       });
     });
-    var fin = document.getElementById('finish-cal');
-    if (fin) fin.addEventListener('click', function(){
-      cal = buildCalibration(calPoints); saveAlign(cal); renderCalStatus();
-      lastCapture = null;
-      alert('Kalibrering lagret ('+cal.type+'). Du kan nå sikte mot objekter — velg et mål øverst eller fra Katalogen.');
-      renderCalib();
+    body.querySelectorAll('[data-del]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var i = +this.getAttribute('data-del');
+        calPoints.splice(i, 1);
+        cal = calPoints.length ? buildCalibration(calPoints) : null;
+        if (cal) saveAlign(cal); else clearAlign();
+        lastCapture = null; renderCalStatus(); renderCalib();
+      });
     });
     var rst = document.getElementById('reset-cal');
     if (rst) rst.addEventListener('click', function(){
