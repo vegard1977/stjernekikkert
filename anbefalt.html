@@ -183,9 +183,12 @@
   document.getElementById('fc-close-bg').addEventListener('click', closeForecastModal);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape'&&fcModal.classList.contains('show')) closeForecastModal(); });
 
-  render();
   initNightMode();
   initInstall();
+  // Tung rangering (≈75k posisjonsberegninger). Utsett den så «Regner ut …»-teksten
+  // tegnes først — ellers blokkerer hovedtråden før første paint. setTimeout (ikke
+  // requestAnimationFrame) fyrer også i skjulte faner, så siden henger aldri på lasting.
+  setTimeout(render, 0);
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
