@@ -205,14 +205,30 @@
     if (typeof e.webkitCompassHeading === 'number'){ az = e.webkitCompassHeading; }
     else if (e.alpha != null){ az = 360 - e.alpha; }   // alpha øker mot klokka
     else return;
-    // beta: forover/bakover-vipp (-180..180). Når du sikter langs tuben i landskaps-
-    // /portrettmodus brukes beta som «høyde» grovt. Vi tar 90 - |beta| justering enkelt:
-    var alt = (e.beta != null) ? (e.beta - 0) : 0;
-    // normaliser alt til -90..90 (telefon flatt = 0 vipp ≈ peker mot horisonten når reist)
-    if (alt > 90) alt = 180 - alt; if (alt < -90) alt = -180 - alt;
+    // Høyde fra vipp. Telefonen ligger flatt på tuben (skjerm opp, toppkant mot
+    // der tuben peker): flatt = horisont (0°), reist mot senit = 90°.
+    // Portrett bruker beta; i landskap/opp-ned er det gamma/−beta som er pitch
+    // langs samme akse. Standard skjermorienterings-konvensjon (uendret i portrett):
+    var alt = devicePitch(e);
     rawAz = ((az % 360) + 360) % 360;
     rawAlt = alt;
     sensorOK = true;
+  }
+  // Pitch (høyde) langs telefonens toppkant, uavhengig av skjermrotasjon.
+  function devicePitch(e){
+    var beta = (e.beta != null) ? e.beta : 0;
+    var gamma = (e.gamma != null) ? e.gamma : 0;
+    var so = 0;
+    if (window.screen && screen.orientation && typeof screen.orientation.angle === 'number') so = screen.orientation.angle;
+    else if (typeof window.orientation === 'number') so = (window.orientation + 360) % 360;
+    var alt;
+    if (so === 90)        alt = -gamma;   // landskap (rotert mot klokka)
+    else if (so === 270)  alt = gamma;    // landskap (rotert med klokka)
+    else if (so === 180)  alt = -beta;    // portrett opp-ned
+    else                  alt = beta;     // portrett (uendret oppførsel)
+    // fold til −90..90
+    if (alt > 90) alt = 180 - alt; if (alt < -90) alt = -180 - alt;
+    return alt;
   }
 
   // ---- Kalibreringsstatus ----

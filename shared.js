@@ -1193,10 +1193,14 @@ function buildCalibration(points){
     var m1 = p1.azMeas, m2 = p1.azMeas + angDiffDeg(p2.azMeas, p1.azMeas);
     var t1 = p1.azTrue, t2 = p1.azTrue + angDiffDeg(p2.azTrue, p1.azTrue);
     var dm = (m2 - m1);
-    var azScale = Math.abs(dm) > 5 ? (t2 - t1) / dm : 1;
+    // For nær hverandre i azimut (<5°): skala blir ustabil — fall tilbake til ren
+    // offset og merk det ærlig, så brukeren ikke tror de fikk skala-korreksjon.
+    var hasScale = Math.abs(dm) > 5;
+    var azScale = hasScale ? (t2 - t1) / dm : 1;
     var azOffset = t1 - azScale * m1;
     var altOffset = ((p1.altTrue - p1.altMeas) + (p2.altTrue - p2.altMeas)) / 2;
-    cal = { azOffset: azOffset, altOffset: altOffset, azScale: azScale, type:'2-stjerner' };
+    cal = { azOffset: azOffset, altOffset: altOffset, azScale: azScale,
+            type: hasScale ? '2-stjerner' : '2-stjerner (kun offset — velg stjerner lenger fra hverandre)' };
   }
   // behold punktene (med stjernenavn) + tidsstempel for oversikt/utløp
   cal.points = points.slice(0, 2);
