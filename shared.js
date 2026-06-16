@@ -22,9 +22,18 @@ function loadSetup() {
   try {
     var s = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (s) {
-      if (!s.telescope) s.telescope = DEFAULT_SETUP.telescope;
-      if (!s.location)  s.location  = DEFAULT_SETUP.location;
-      if (!s.eyepieces) s.eyepieces = {};
+      // Dyp-fyll: et delvis/tomt sub-objekt (f.eks. fra en importert eller eldre
+      // backup, eller manuell tukling) skal ALDRI gi undefined lat/fl nedstrøms —
+      // det krasjer hver side (lat.toFixed på undefined). Reparer feltvis, ikke bare
+      // tilstedeværelse.
+      s.telescope = s.telescope || {};
+      if (s.telescope.ap == null) s.telescope.ap = DEFAULT_SETUP.telescope.ap;
+      if (s.telescope.fl == null) s.telescope.fl = DEFAULT_SETUP.telescope.fl;
+      if (!s.telescope.model)     s.telescope.model = DEFAULT_SETUP.telescope.model;
+      s.location = s.location || {};
+      if (typeof s.location.lat !== 'number') s.location.lat = DEFAULT_SETUP.location.lat;
+      if (typeof s.location.lon !== 'number') s.location.lon = DEFAULT_SETUP.location.lon;
+      if (!s.eyepieces || typeof s.eyepieces !== 'object') s.eyepieces = {};
       if (s.barlow == null) s.barlow = 1;
       if (s.bortle === undefined) s.bortle = null;
       return s;
