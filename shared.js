@@ -93,7 +93,7 @@ var BADGES = [
   {id:'first',  emo:'🌟', name:'Første lys',        desc:'Sett ditt aller første objekt', test:function(s){ return s.length>=1; }},
   {id:'five',   emo:'✋', name:'Femkløver',          desc:'Sett 5 objekter', test:function(s){ return s.length>=5; }},
   {id:'ten',    emo:'🔟', name:'Ti på rad',          desc:'Sett 10 objekter', test:function(s){ return s.length>=10; }},
-  {id:'moon',   emo:'🌕', name:'Månevandrer',        desc:'Sett Månen', test:function(s){ return s.indexOf('moon')>=0; }},
+  {id:'moon',   emo:'🌕', name:'Månevandrer',        desc:'Sett Månen', test:function(s){ return s.indexOf('luna')>=0; }},
   {id:'planet3',emo:'🪐', name:'Planetjeger',        desc:'Sett 3 planeter', test:function(s,cat){ return countType(s,cat,'planet')>=3; }},
   {id:'gx3',    emo:'🌀', name:'Galaksesamler',      desc:'Sett 3 galakser', test:function(s,cat){ return countType(s,cat,'galaxy')>=3; }},
   {id:'neb3',   emo:'🌫', name:'Tåkefanger',         desc:'Sett 3 tåker', test:function(s,cat){ return countType(s,cat,'nebula')>=3; }},
@@ -945,7 +945,8 @@ function bestViewingNights(raH, decDeg, lat, lon, fromDate, nDays, opts) {
     var best = null, peakAnytime = -90, darkEnoughMin = 0, peakWhenDark = -90, darkExists = false;
     for (var m = 0; m <= 1440; m += 15) {
       var t = new Date(base.getTime() + m * 60000);
-      var sa = altAz(sunPos(t).ra, sunPos(t).dec, t, lat, lon).alt;
+      var sp = sunPos(t);
+      var sa = altAz(sp.ra, sp.dec, t, lat, lon).alt;
       var pr = posFn ? posFn(t) : {ra:raH, dec:decDeg};
       var oa = altAz(pr.ra, pr.dec, t, lat, lon).alt;
       if (oa > peakAnytime) peakAnytime = oa;

@@ -161,6 +161,7 @@
   var cal = loadAlign();              // lagret kalibrering
   if (cal && cal.points) calPoints = cal.points.slice(0, 2);  // gjenopprett punkter for oversikt
   var target = null;                  // {name, ra, dec} valgt mål
+  var lastPosRefresh = 0;             // siste reberegning av bevegelig mål (ms)
   var lockHold = 0;
 
   // Mål fra forrige side (via localStorage-overlevering)
@@ -252,12 +253,35 @@
     aldebaran:{con:'tau',from:'Elnath'}, regulus:{con:'leo',from:'Algieba'}
   };
   // ---- Sett mål ----
+  // Live posisjon for objekter i bevegelse (Måne + planeter). Returnerer null for
+  // faste objekter (stjerner/dyprom), som beholder sine lagrede J2000-koordinater.
+  function liveBodyPos(id, date){
+    if (!id) return null;
+    if (id === 'luna') return moonPos(date);
+    var pp = planetPos(id, date);
+    if (pp) return pp;
+    // måne av en planet (Io, Titan …) → følg planeten; avstanden er buesekunder
+    if (typeof MOONS !== 'undefined') {
+      for (var i = 0; i < MOONS.length; i++) {
+        if (MOONS[i].id === id && MOONS[i].parent) return planetPos(MOONS[i].parent, date);
+      }
+    }
+    return null;
+  }
+  // Oppdater target.ra/dec til NÅ hvis objektet beveger seg. Trygt for faste objekter.
+  function refreshTargetPos(){
+    if (!target) return;
+    var lp = liveBodyPos(target.id, new Date());
+    if (lp){ target.ra = lp.ra; target.dec = lp.dec; }
+  }
+
   function setTarget(t){
     target = t;
+    refreshTargetPos();                 // fersk posisjon før kart/kalibrering
     document.getElementById('pick-panel').classList.add('hidden');
     document.getElementById('aim-panel').classList.remove('hidden');
     document.getElementById('aim-target').textContent = '🎯 ' + t.name;
-    renderAimChart(t);
+    renderAimChart(target);
   }
   function renderAimChart(t){
     var box = document.getElementById('aim-chart');
@@ -367,7 +391,10 @@
       document.getElementById('cur-alt').textContent = Math.round(corr.alt)+'°';
 
       if (target){
-        var t = altAz(target.ra, target.dec, new Date(), lat, lon);
+        var nowD = new Date();
+        // reberegn Måne/planet-posisjon med jevne mellomrom (de driver ~0,5°/t)
+        if (nowD - lastPosRefresh > 2000){ refreshTargetPos(); lastPosRefresh = +nowD; }
+        var t = altAz(target.ra, target.dec, nowD, lat, lon);
         var d = aimDelta(corr.az, corr.alt, t.az, t.alt);
         updateArrows(d, t);
       }

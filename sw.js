@@ -1,6 +1,6 @@
 // Stjernekikkert service worker (PERF-3) — offline-støtte.
 // Cache-first for app-skall; nett-fallback for alt annet (f.eks. vær-API senere).
-var CACHE = 'stjernekikkert-v20';
+var CACHE = 'stjernekikkert-v21';
 var ASSETS = [
   'index.html',
   'objekter.html',
