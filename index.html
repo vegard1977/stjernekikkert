@@ -280,6 +280,22 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
   .ctrl-row{grid-template-columns:1fr 1fr}
   .ctrl-row > button{grid-column:span 1}
 }
+
+/* ISS / romstasjonen */
+.iss-card{background:linear-gradient(180deg,rgba(111,216,224,.07),rgba(111,216,224,.02));border:1px solid rgba(111,216,224,.22);border-radius:12px;padding:13px 16px;margin-bottom:14px}
+.iss-head{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+.iss-refresh{margin-left:auto;background:none;border:1px solid var(--line-strong);color:var(--ink-faint);border-radius:7px;padding:3px 9px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.78rem;letter-spacing:0;text-transform:none}
+.iss-refresh:hover{border-color:var(--cyan);color:var(--cyan)}
+.iss-body{font-size:.92rem;color:var(--ink);line-height:1.5}
+.iss-big{font-family:'Fraunces',serif;font-size:1.04rem}
+.iss-dir{color:var(--cyan);font-family:'JetBrains Mono',monospace;border-bottom:1px dashed rgba(111,216,224,.45);cursor:pointer;padding-bottom:1px;white-space:nowrap}
+.iss-dir:hover{color:var(--gold)}
+.iss-sub{font-size:.82rem;color:var(--ink-soft);margin-top:5px}
+.iss-vis{font-size:.84rem;margin-top:6px;font-weight:500}
+.iss-vis.yes{color:var(--green)}
+.iss-vis.no{color:var(--ink-faint)}
+.iss-muted{color:var(--ink-soft)}
+.iss-loading{color:var(--ink-faint);font-style:italic}
 </style>
 </head>
 <body>
@@ -346,6 +362,7 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
   <div id="darkness-timeline"></div>
   <div id="weather-box"></div>
   <div id="events-box"></div>
+  <div id="iss-box"></div>
   <div id="moon-warn"></div>
   <div class="log-count" id="log-count"></div>
 
@@ -1189,9 +1206,54 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,
     }
   });
 
+  // ---- ISS / romstasjonen (live «hvor er den nå») ----
+  var issTimer = null;
+  function issShell(inner){
+    return '<div class="iss-card"><div class="iss-head"><span>🛰️ Romstasjonen (ISS)</span>'+
+      '<button class="iss-refresh" id="iss-refresh">🔄 Oppdater</button></div>'+
+      '<div class="iss-body" id="iss-body">'+inner+'</div></div>';
+  }
+  function issWire(){
+    var rb = document.getElementById('iss-refresh');
+    if (rb) rb.addEventListener('click', function(){ renderISS(true); });
+    var d = document.querySelector('#iss-body .iss-dir');
+    if (d) d.addEventListener('click', function(){ openCompassModal(parseFloat(this.getAttribute('data-az')), 'ISS 🛰️'); });
+  }
+  function renderISS(force){
+    var box = document.getElementById('iss-box'); if(!box) return;
+    if (issTimer){ clearTimeout(issTimer); issTimer = null; }
+    if (force || !box.firstChild){ box.innerHTML = issShell('<span class="iss-loading">Henter ISS-posisjon …</span>'); issWire(); }
+    var atLat = lat, atLon = lon;
+    fetchISS().then(function(d){
+      var la = lookAngle(atLat, atLon, d.lat, d.lon, d.altKm);
+      var az = intc(la.az), inner;
+      if (la.alt >= 0){
+        var now = new Date();
+        var sa = altAz(sunPos(now).ra, sunPos(now).dec, now, atLat, atLon).alt;
+        var vis, visCls;
+        if (!d.sunlit){ vis = '🌑 I jordas skygge nå — over horisonten, men ikke solbelyst (usynlig).'; visCls='no'; }
+        else if (sa >= -6){ vis = '☀ For lyst ute ennå — over horisonten, men himmelen er for lys.'; visCls='no'; }
+        else { vis = '✨ Synlig nå! Se etter en rask, jevn lysprikk — ingen blink.'; visCls='yes'; }
+        inner =
+          '<div class="iss-big">Over horisonten — <span class="iss-dir" data-az="'+la.az+'" title="Trykk for kompass">se mot '+compassSimple(la.az)+' · '+az+'°</span></div>'+
+          '<div class="iss-sub"><b>'+intc(la.alt)+'°</b> over horisonten · ca. '+intc(la.rangeKm)+' km unna</div>'+
+          '<div class="iss-vis '+visCls+'">'+vis+'</div>';
+      } else {
+        inner = '<div class="iss-big iss-muted">Under horisonten nå ('+intc(la.alt)+'°)</div>'+
+          '<div class="iss-sub">Ikke synlig herfra akkurat nå. ISS runder jorda på ~90 min — trykk 🔄 senere.</div>';
+      }
+      box.innerHTML = issShell(inner); issWire();
+      // Live-oppdatering kun under en pågående passering (den flytter seg fort); ellers ikke poll.
+      if (la.alt >= 0 && !document.hidden) issTimer = setTimeout(function(){ renderISS(false); }, 5000);
+    }).catch(function(){
+      box.innerHTML = issShell('<span class="iss-muted">Fikk ikke ISS-data (offline?). Trykk 🔄 for å prøve igjen.</span>'); issWire();
+    });
+  }
+
   initNightMode();
   initInstall();
   render();
+  renderISS(true);
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>

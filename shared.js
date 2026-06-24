@@ -1028,6 +1028,43 @@ function compassSimple(az) {
   var d = ['Nord','Nordøst','Øst','Sørøst','Sør','Sørvest','Vest','Nordvest'];
   return d[Math.round(az/45) % 8];
 }
+
+// ================================================================
+// SATELLITT — Den internasjonale romstasjonen (ISS)
+// «Hvor er den nå»: henter ISS' subpunkt live (åpent API, åpen CORS,
+// ingen nøkkel) og regner ut retning + høyde fra observatøren.
+// Ikke passeringsvarsel — krever nett (ingen offline-cache).
+// ================================================================
+function fetchISS() {
+  return fetch('https://api.wheretheiss.at/v1/satellites/25544').then(function(r){
+    if (!r.ok) throw new Error('ISS-data utilgjengelig');
+    return r.json();
+  }).then(function(d){
+    return { lat:d.latitude, lon:d.longitude, altKm:d.altitude,
+             sunlit:(d.visibility === 'daylight'), ts:d.timestamp };
+  });
+}
+
+// Topo-sentrisk retning (azimut/høyde) fra observatør til et punkt over jorda.
+// Sfærisk jord (R=6371 km); rikelig presist for «se-den-veien». Returnerer
+// {az: grader fra nord med klokka, alt: grader over horisont, rangeKm}.
+function lookAngle(obsLat, obsLon, satLat, satLon, satAltKm) {
+  var R = 6371;
+  var oLat = deg2rad(obsLat), oLon = deg2rad(obsLon);
+  var sLat = deg2rad(satLat), sLon = deg2rad(satLon);
+  var co = Math.cos(oLat), so = Math.sin(oLat);
+  var ox = R*co*Math.cos(oLon), oy = R*co*Math.sin(oLon), oz = R*so;
+  var rs = R + satAltKm, cs = Math.cos(sLat);
+  var sx = rs*cs*Math.cos(sLon), sy = rs*cs*Math.sin(sLon), sz = rs*Math.sin(sLat);
+  var dx = sx-ox, dy = sy-oy, dz = sz-oz;
+  var slon = Math.sin(oLon), clon = Math.cos(oLon);
+  var e = -slon*dx + clon*dy;
+  var n = -so*clon*dx - so*slon*dy + co*dz;
+  var u =  co*clon*dx + co*slon*dy + so*dz;
+  var range = Math.sqrt(dx*dx + dy*dy + dz*dz);
+  var sinAlt = Math.max(-1, Math.min(1, u/range));   // klamre mot flyttalls-overskuddsfeil → ingen NaN
+  return { az: norm360(rad2deg(Math.atan2(e, n))), alt: rad2deg(Math.asin(sinAlt)), rangeKm: range };
+}
 function fmtTime(d) {
   var h=d.getHours(), m=d.getMinutes();
   return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
